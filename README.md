@@ -126,10 +126,7 @@ EOF
 # pwd: variant-benchmarking/data
 
 simutator mutate_fasta \
-  --snps 7000 \
-  --dels 2000:3 \
-  --ins 2000:2 \
-  --seed 42 \
+  --complex 20000:50:11:2:3:5 \
   reference/chr22.fa \
   simulated/SIMULATED_SAMPLE_chr22
 ```
