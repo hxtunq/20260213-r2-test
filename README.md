@@ -141,26 +141,40 @@ perl simuG/simuG.pl \
 ```bash
 #pwd: variant-benchmarking/data
 
-REF_FASTA="reference/chr22.fa"
-SIM_DIR="simulated"
+samtools faidx reference/chr22.fa
+
+awk 'BEGIN{print "##fileformat=VCFv4.2"}
+     {print "##contig=<ID="$1",length="$2">"}' reference/chr22.fa.fai > simulated/contigs.hdr
+
+```
+
+```bash
+#pwd: variant-benchmarking/data
+
 PREFIX="SIMULATED_SAMPLE_chr22"
+SIM_DIR="simulated"
 TRUTH_VCF="${SIM_DIR}/${PREFIX}_truth.vcf.gz"
 
-# merge SNP và INDEL VCF từ simuG
+bcftools reheader -h simulated/contigs.hdr \
+  -o ${SIM_DIR}/${PREFIX}.refseq2simseq.SNP.rehead.vcf \
+  ${SIM_DIR}/${PREFIX}.refseq2simseq.SNP.vcf
+
+bcftools reheader -h simulated/contigs.hdr \
+  -o ${SIM_DIR}/${PREFIX}.refseq2simseq.INDEL.rehead.vcf \
+  ${SIM_DIR}/${PREFIX}.refseq2simseq.INDEL.vcf
+
 bcftools concat \
-  ${SIM_DIR}/${PREFIX}.refseq2simseq.SNP.vcf \
-  ${SIM_DIR}/${PREFIX}.refseq2simseq.INDEL.vcf | \
-bcftools sort -Oz -o ${TRUTH_VCF}
+  ${SIM_DIR}/${PREFIX}.refseq2simseq.SNP.rehead.vcf \
+  ${SIM_DIR}/${PREFIX}.refseq2simseq.INDEL.rehead.vcf \
+| bcftools sort -Oz -o ${TRUTH_VCF}
+
 tabix -p vcf ${TRUTH_VCF}
 
-# tabix cho file SNP và INDEL gốc từ simuG (để benchmark riêng từng loại nếu cần)
-bgzip -c ${SIM_DIR}/${PREFIX}.refseq2simseq.SNP.vcf > ${SIM_DIR}/${PREFIX}_truth_snp.vcf.gz
-bgzip -c ${SIM_DIR}/${PREFIX}.refseq2simseq.INDEL.vcf > ${SIM_DIR}/${PREFIX}_truth_indel.vcf.gz
+bgzip -c ${SIM_DIR}/${PREFIX}.refseq2simseq.SNP.rehead.vcf > ${SIM_DIR}/${PREFIX}_truth_snp.vcf.gz
+bgzip -c ${SIM_DIR}/${PREFIX}.refseq2simseq.INDEL.rehead.vcf > ${SIM_DIR}/${PREFIX}_truth_indel.vcf.gz
 tabix -p vcf ${SIM_DIR}/${PREFIX}_truth_snp.vcf.gz
 tabix -p vcf ${SIM_DIR}/${PREFIX}_truth_indel.vcf.gz
 
-# index file FASTA từ simuG (không cần đổi tên)
-samtools faidx ${SIM_DIR}/${PREFIX}.simseq.genome.fa
 ```
 
 #### 2.5. Tạo reads với ART Illumina
