@@ -1,10 +1,10 @@
 # Variant Calling Benchmarking Pipeline 
 
-Pipeline so sánh hiệu suất 4 variant caller: GATK, DeepVariant, Strelka2, FreeBayes
+Pipeline so sánh hiệu suất 4 variant caller: GATK, DeepVariant, Strelka2, FreeBayes.
 
 ## Quy trình thực hiện
 
-### PHẦN 1: Tạo cấu trúc folder
+### Phần I. Tạo cấu trúc folder
 
 ```bash
 git clone https://github.com/bitschif/variant-benchmarking.git
@@ -22,7 +22,7 @@ mkdir -p results/variants/freebayes
 mkdir -p logs
 ```
 
-### PHẦN 2: Download và chuẩn bị dữ liệu
+### Phần II. Download và chuẩn bị dữ liệu
 
 #### 2.1. Download Reference Genome (chr22 - hg38)
 
@@ -75,7 +75,7 @@ wget -c https://storage.googleapis.com/gcp-public-data--broad-references/hg38/v0
 bcftools view -r chr22 1000G_phase1.snps.high_confidence.hg38.vcf.gz -Oz -o 1000G_phase1.snps.high_confidence.hg38.chr22.vcf.gz
 tabix -p vcf 1000G_phase1.snps.high_confidence.hg38.chr22.vcf.gz
 
-# dọn dẹp file gốc (tùy chọn)
+# xoá file không sử dụng đến
 rm -f Homo_sapiens_assembly38.dbsnp138.vcf Homo_sapiens_assembly38.dbsnp138.vcf.idx
 rm -f Mills_and_1000G_gold_standard.indels.hg38.vcf.gz Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi
 rm -f 1000G_phase1.snps.high_confidence.hg38.vcf.gz 1000G_phase1.snps.high_confidence.hg38.vcf.gz.tbi
@@ -88,12 +88,13 @@ rm -f 1000G_phase1.snps.high_confidence.hg38.vcf.gz 1000G_phase1.snps.high_confi
 
 # reference genome từ UCSC sử dụng format "chr22"
 # tất cả VCF files phải có tên chromosome khớp với tên ở file reference
-# kiểm tra tên chromosome trong VCF
+
+# lệnh kiểm tra tên chromosome trong các file VCF
 bcftools view -h file.vcf.gz | grep "^##contig"
 tabix -l gile.vcf.gz # ở đồ án và repository này lấy tên là "chr22" làm chuẩn
 
-# nếu gặp lỗi "chromosome not found", kiểm tra và đổi lại chromosome
-# Cách đổi tên "22" thành "chr22" nếu cần
+# nếu gặp lỗi "chromosome not found", kiểm tra và đổi lại tên chromosome
+# cách đổi tên "22" thành "chr22" nếu cần
 bcftools annotate --rename-chrs chr_map.txt input.vcf.gz -Oz -o output.vcf.gz
 
 # tạo file BED chứa vùng non-N của chromosome
@@ -114,16 +115,16 @@ with open(output, 'w') as out:
             if end - start >= 1000:
                 out.write(f"{chrom}\t{start}\t{end}\n")
 
-print("Done!")
+print("Done")
 EOF
 ```
 
-#### 2.3. Tạo dữ liệu giả lập với simuG
+#### 2.3. Tạo đột biến SNPs và INDELs với simuG
 
 ```bash
 # pwd: variant-benchmarking/data
 
-# clone simuG về folder data
+# clone simuG về folder <data>
 git clone https://github.com/yjx1217/simuG.git
 
 # dùng simuG tạo đột biến
@@ -191,7 +192,7 @@ gzip "${SIM_DIR}/${PREFIX}_R1.fastq"
 gzip "${SIM_DIR}/${PREFIX}_R2.fastq"
 ```
 
-### PHẦN 3: Chạy Pipeline
+### Phần III. Tiền xử lý và gọi biến thể
 
 Sau khi hoàn thành PHẦN 1 và PHẦN 2, chạy các script theo thứ tự:
 
@@ -236,7 +237,7 @@ bash 06_variant_calling_freebayes.sh
 └── README.md
 ```
 
-## Yêu cầu công cụ
+## Các tools được sử dụng:
 
 - fastq, bwa, samtools, bcftools
 - simuG, art_illumina
