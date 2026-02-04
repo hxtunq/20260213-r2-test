@@ -47,8 +47,8 @@ Known sites giúp cải thiện chất lượng Base Quality Score Recalibration
 cd data/reference
 
 # === dbSNP ===
-wget https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf
-wget https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf.idx
+wget -c https://storage.googleapis.com/gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf
+wget -c https://storage.googleapis.com/gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf.idx
 
 # Extract chr22 và đảm bảo chromosome naming là "chr22"
 bcftools view -r chr22 Homo_sapiens_assembly38.dbsnp138.vcf -Oz -o dbsnp_146.hg38.chr22.vcf.gz
