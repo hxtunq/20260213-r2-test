@@ -125,17 +125,13 @@ EOF
 ```bash
 # pwd: variant-benchmarking/data
 
-REF_FASTA="/reference/chr22.fa"
-SIM_DIR="/simulated"
-PREFIX="SIMULATED_SAMPLE_chr22"
-
 simutator mutate_fasta \
-    --snps 7000 \
-    --dels 2000:3 \
-    --ins 2000:2 \
-    --seed 42 \
-    "${REF_FASTA}" \
-    "${SIM_DIR}/${PREFIX}"
+  --snps 7000 \
+  --dels 2000:3 \
+  --ins 2000:2 \
+  --seed 42 \
+  reference/chr22.fa \
+  simulated/SIMULATED_SAMPLE_chr22
 ```
 
 #### 2.4. Merge và chuẩn bị Truth VCF
