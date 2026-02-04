@@ -41,7 +41,7 @@ bwa index chr22.fa
 gatk CreateSequenceDictionary -R chr22.fa -O chr22.dict
 ```
 
-#### 2.2. Download Known Sites cho BQSR (Tùy chọn nhưng khuyến nghị)
+#### 2.2. Download Known Sites cho BQSR
 
 Known sites giúp cải thiện chất lượng Base Quality Score Recalibration.
 
