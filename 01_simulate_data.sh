@@ -107,6 +107,16 @@ RAW_MERGED_VCF="${TMP_MERGE_DIR}/${PREFIX}.truth.raw.sorted.vcf.gz"
     done
 } | bcftools sort -Oz -o "${RAW_MERGED_VCF}" -
 
+# Fix missing REF fields using the reference (simutator can emit "." in REF)
+RAW_FIXED_VCF="${TMP_MERGE_DIR}/${PREFIX}.truth.raw.fixed.vcf.gz"
+bcftools +fixref "${RAW_MERGED_VCF}" -Ou -- -f "${REF_FASTA}" \
+| bcftools sort -Oz -o "${RAW_FIXED_VCF}" -
+
+REF_DOT_COUNT=$(bcftools view -H "${RAW_FIXED_VCF}" | awk -F'\t' '$4=="."' | wc -l)
+if (( REF_DOT_COUNT > 0 )); then
+    log_warn "Still found ${REF_DOT_COUNT} records with REF='.' after fixref"
+fi
+
 # Normalize vs reference, de-duplicate, then write final TRUTH_VCF
 # --check-ref x: drop records whose REF doesn't match the reference (helps if rare overlaps happen)
 bcftools norm \
@@ -114,7 +124,7 @@ bcftools norm \
     -f "${REF_FASTA}" \
     -m -both \
     -d both \
-    "${RAW_MERGED_VCF}" \
+    "${RAW_FIXED_VCF}" \
     -Ou \
 | bcftools sort -Oz -o "${TRUTH_VCF}" -
 
