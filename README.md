@@ -65,9 +65,9 @@ wget -c https://storage.googleapis.com/gcp-public-data--broad-references/hg38/v0
 bcftools view -r chr22 Mills_and_1000G_gold_standard.indels.hg38.vcf.gz -Oz -o Mills_and_1000G_gold_standard.indels.hg38.chr22.vcf.gz
 tabix -p vcf Mills_and_1000G_gold_standard.indels.hg38.chr22.vcf.gz
 
-# === 1000G Phase 1 SNPs (Tùy chọn) ===
-wget https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/1000G_phase1.snps.high_confidence.hg38.vcf.gz
-wget https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/1000G_phase1.snps.high_confidence.hg38.vcf.gz.tbi
+# === 1000G Phase 1 SNPs ===
+wget -c https://storage.googleapis.com/gcp-public-data--broad-references/hg38/v0/1000G_phase1.snps.high_confidence.hg38.vcf.gz
+wget -c https://storage.googleapis.com/gcp-public-data--broad-references/hg38/v0/1000G_phase1.snps.high_confidence.hg38.vcf.gz.tbi
 
 # Extract chr22
 bcftools view -r chr22 1000G_phase1.snps.high_confidence.hg38.vcf.gz -Oz -o 1000G_phase1.snps.high_confidence.hg38.chr22.vcf.gz
@@ -86,12 +86,10 @@ rm -f 1000G_phase1.snps.high_confidence.hg38.vcf.gz 1000G_phase1.snps.high_confi
   ```bash
   # Kiểm tra chromosome names trong VCF
   bcftools view -h file.vcf.gz | grep "^##contig"
+  tabix -l gile.vcf.gz # ở đồ án và repository này lấy tên là "chr22" làm chuẩn
   
-  # Rename "22" thành "chr22" nếu cần
+  # Cách đổi tên "22" thành "chr22" nếu cần
   bcftools annotate --rename-chrs chr_map.txt input.vcf.gz -Oz -o output.vcf.gz
-  
-  # File chr_map.txt chứa:
-  # 22 chr22
   ```
 
 #### 2.3. Tạo dữ liệu giả lập với Simutator
