@@ -139,42 +139,32 @@ perl simuG/simuG.pl \
 #### 2.4. Merge và chuẩn bị Truth VCF
 
 ```bash
-#pwd: variant-benchmarking/data
-
-samtools faidx reference/chr22.fa
-
-awk 'BEGIN{print "##fileformat=VCFv4.2"}
-     {print "##contig=<ID="$1",length="$2">"}' reference/chr22.fa.fai > simulated/contigs.hdr
-
-```
-
-```bash
-#pwd: variant-benchmarking/data
+# pwd: variant-benchmarking/data
 
 PREFIX="SIMULATED_SAMPLE_chr22"
 SIM_DIR="simulated"
+REF_FASTA="reference/chr22.fa"
 TRUTH_VCF="${SIM_DIR}/${PREFIX}_truth.vcf.gz"
 
-bcftools reheader -h simulated/contigs.hdr \
-  -o ${SIM_DIR}/${PREFIX}.refseq2simseq.SNP.rehead.vcf \
-  ${SIM_DIR}/${PREFIX}.refseq2simseq.SNP.vcf
+# Đảm bảo có index cho reference
+samtools faidx ${REF_FASTA}
 
-bcftools reheader -h simulated/contigs.hdr \
-  -o ${SIM_DIR}/${PREFIX}.refseq2simseq.INDEL.rehead.vcf \
-  ${SIM_DIR}/${PREFIX}.refseq2simseq.INDEL.vcf
-
+# Merge trực tiếp (không cần reheader riêng)
 bcftools concat \
-  ${SIM_DIR}/${PREFIX}.refseq2simseq.SNP.rehead.vcf \
-  ${SIM_DIR}/${PREFIX}.refseq2simseq.INDEL.rehead.vcf \
-| bcftools sort -Oz -o ${TRUTH_VCF}
+  ${SIM_DIR}/${PREFIX}.refseq2simseq.SNP.vcf \
+  ${SIM_DIR}/${PREFIX}.refseq2simseq.INDEL.vcf | \
+bcftools reheader --fai ${REF_FASTA}.fai | \
+bcftools sort -Oz -o ${TRUTH_VCF}
 
 tabix -p vcf ${TRUTH_VCF}
 
-bgzip -c ${SIM_DIR}/${PREFIX}.refseq2simseq.SNP.rehead.vcf > ${SIM_DIR}/${PREFIX}_truth_snp.vcf.gz
-bgzip -c ${SIM_DIR}/${PREFIX}.refseq2simseq.INDEL.rehead.vcf > ${SIM_DIR}/${PREFIX}_truth_indel.vcf.gz
+# Tạo file riêng cho SNP và INDEL
+bgzip -c ${SIM_DIR}/${PREFIX}.refseq2simseq.SNP.vcf > ${SIM_DIR}/${PREFIX}_truth_snp.vcf.gz
+bgzip -c ${SIM_DIR}/${PREFIX}.refseq2simseq.INDEL.vcf > ${SIM_DIR}/${PREFIX}_truth_indel.vcf.gz
 tabix -p vcf ${SIM_DIR}/${PREFIX}_truth_snp.vcf.gz
 tabix -p vcf ${SIM_DIR}/${PREFIX}_truth_indel.vcf.gz
 
+echo "Done!"
 ```
 
 #### 2.5. Tạo reads với ART Illumina
