@@ -36,6 +36,7 @@ ABS_OUT_DIR=$(cd "${OUT_DIR}" && pwd)
 
 BAM_BASENAME=$(basename "${FINAL_BAM}")
 REF_BASENAME=$(basename "${REF_FASTA}")
+WES_BED_BASENAME=$(basename "${WES_BED}")
 
 #-------------------------------------------------------------------------------
 # 2. Run DeepVariant via Docker
@@ -62,7 +63,7 @@ docker run \
     --output_gvcf="/output/${PREFIX}_${CALLER}.g.vcf.gz" \
     --intermediate_results_dir="/output/intermediate" \
     --num_shards="${THREADS}" \
-    --regions="/ref/chr22_exome_targets_padded.bed" \
+    --regions="/ref/${WES_BED_BASENAME}" \
     2>&1 | tee "${LOG_DIR}/${CALLER}.log"
 
 check_exit "DeepVariant"
