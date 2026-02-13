@@ -47,6 +47,86 @@ end_timer() {
     echo "${step_name},${duration}" >> "${LOG_DIR}/runtime.csv"
 }
 
+parse_time_to_seconds() {
+    local wall_time="$1"
+    local h=0
+    local m=0
+    local s=0
+
+    if [[ "${wall_time}" == *:*:* ]]; then
+        IFS=':' read -r h m s <<< "${wall_time}"
+    elif [[ "${wall_time}" == *:* ]]; then
+        IFS=':' read -r m s <<< "${wall_time}"
+    else
+        s="${wall_time}"
+    fi
+
+    awk -v h="${h}" -v m="${m}" -v s="${s}" 'BEGIN {printf "%.3f", (h*3600)+(m*60)+s}'
+}
+
+append_resource_metrics() {
+    local caller="$1"
+    local step_name="$2"
+    local time_log="$3"
+    local metrics_file="${LOG_DIR}/resource_usage.tsv"
+    local header="Caller\tStep\tWallClockSeconds\tCPUPercent\tMaxRSS_GB"
+
+    [[ -f "${time_log}" ]] || return 0
+
+    local wall_raw
+    local cpu_raw
+    local rss_kb
+
+    wall_raw=$(awk -F': *' '/Elapsed \(wall clock\) time/{print $2; exit}' "${time_log}" || true)
+    cpu_raw=$(awk -F': *' '/Percent of CPU this job got/{print $2; exit}' "${time_log}" | tr -d '%' || true)
+    rss_kb=$(awk -F': *' '/Maximum resident set size \(kbytes\)/{print $2; exit}' "${time_log}" || true)
+
+    local wall_seconds="NA"
+    local cpu_percent="NA"
+    local rss_gb="NA"
+
+    if [[ -n "${wall_raw}" ]]; then
+        wall_seconds=$(parse_time_to_seconds "${wall_raw}")
+    fi
+    if [[ -n "${cpu_raw}" ]]; then
+        cpu_percent="${cpu_raw}"
+    fi
+    if [[ -n "${rss_kb}" ]]; then
+        rss_gb=$(awk -v kb="${rss_kb}" 'BEGIN {printf "%.3f", kb/1024/1024}')
+        local rss_limit_kb=$((14 * 1024 * 1024))
+        if [[ "${rss_kb}" -gt "${rss_limit_kb}" ]]; then
+            log_warn "${caller}/${step_name} exceeded RAM cap 14G (MaxRSS=${rss_gb}G)"
+        fi
+    fi
+
+    if [[ ! -f "${metrics_file}" ]]; then
+        echo -e "${header}" > "${metrics_file}"
+    fi
+    echo -e "${caller}\t${step_name}\t${wall_seconds}\t${cpu_percent}\t${rss_gb}" >> "${metrics_file}"
+}
+
+run_with_metrics() {
+    local caller="$1"
+    local step_name="$2"
+    local log_file="$3"
+    shift 3
+
+    local time_log="${log_file}.time"
+    ensure_dir "$(dirname "${log_file}")"
+
+    if command -v /usr/bin/time >/dev/null 2>&1; then
+        /usr/bin/time -v -o "${time_log}" "$@" 2>&1 | tee "${log_file}"
+    else
+        "$@" 2>&1 | tee "${log_file}"
+    fi
+
+    local status=${PIPESTATUS[0]}
+    if [[ ${status} -eq 0 ]]; then
+        append_resource_metrics "${caller}" "${step_name}" "${time_log}"
+    fi
+    return ${status}
+}
+
 check_exit() {
     if [[ $? -ne 0 ]]; then
         log_error "$1 failed"

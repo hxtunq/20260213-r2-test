@@ -45,12 +45,14 @@ log_info "Running DeepVariant via Docker..."
 log_info "  Image: ${DEEPVARIANT_IMAGE}"
 log_info "  Model: WES"
 
-DOCKER_USER_NAME="${RUN_AS_USER:-${USER:-hxt}}"
-DOCKER_USER="$(id -u "${DOCKER_USER_NAME}")":"$(id -g "${DOCKER_USER_NAME}")"
+DOCKER_USER="$(id -u)":"$(id -g)"
 
-docker run \
+run_with_metrics "${CALLER}" "run_deepvariant" "${LOG_DIR}/${CALLER}.log" \
+    docker run \
     --rm \
     --user "${DOCKER_USER}" \
+    --cpus "${THREADS}" \
+    --memory "${MAX_MEMORY}" \
     -v "${ABS_REF_DIR}:/ref:ro" \
     -v "${ABS_PREPROC_DIR}:/input:ro" \
     -v "${ABS_OUT_DIR}:/output" \
@@ -63,8 +65,7 @@ docker run \
     --output_gvcf="/output/${PREFIX}_${CALLER}.g.vcf.gz" \
     --intermediate_results_dir="/output/intermediate" \
     --num_shards="${THREADS}" \
-    --regions="/ref/${WES_BED_BASENAME}" \
-    2>&1 | tee "${LOG_DIR}/${CALLER}.log"
+    --regions="/ref/${WES_BED_BASENAME}"
 
 check_exit "DeepVariant"
 

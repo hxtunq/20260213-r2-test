@@ -5,11 +5,26 @@
 #===============================================================================
 
 #-------------------------------------------------------------------------------
-# SYSTEM RESOURCES (RAM 16GB, 4 CPU)
+# SYSTEM RESOURCES (auto-detect with safe caps)
 #-------------------------------------------------------------------------------
-export THREADS=4
+CPU_DETECTED=$(getconf _NPROCESSORS_ONLN 2>/dev/null || nproc 2>/dev/null || echo 4)
+if [[ -z "${CPU_DETECTED}" || "${CPU_DETECTED}" -lt 1 ]]; then
+    CPU_DETECTED=4
+fi
+
+# Keep one core free for system responsiveness, and cap at 8 for local benchmark fairness.
+THREADS=$((CPU_DETECTED - 1))
+if [[ "${THREADS}" -lt 1 ]]; then
+    THREADS=1
+elif [[ "${THREADS}" -gt 8 ]]; then
+    THREADS=8
+fi
+export THREADS
+
+# Cap memory usage to machine limit (14G requested by project constraints).
 export MAX_MEMORY="14G"
-export JAVA_OPTS="-Xmx12G -XX:ParallelGCThreads=2"
+export JAVA_HEAP="12G"
+export JAVA_OPTS="-Xmx${JAVA_HEAP} -XX:ParallelGCThreads=2"
 
 #-------------------------------------------------------------------------------
 # DIRECTORY PATHS
@@ -96,6 +111,11 @@ export TRUTH_VCF="${SIM_DIR}/${PREFIX}_truth.vcf.gz"
 export HIGH_CONF_BED="${REF_DIR}/chr22_non_N_regions.bed"
 export WES_BED="${REF_DIR}/chr22_exome_targets_padded.bed"
 export WES_BED_GZ="${REF_DIR}/chr22_exome_targets_padded.bed.gz"
+
+# Optional functional impact score tables (TSV with CHROM POS REF ALT SCORE columns)
+export ALPHAMISSENSE_SCORES="${REF_DIR}/alphamissense_scores.tsv"
+export ALPHAGENOME_SCORES="${REF_DIR}/alphagenome_scores.tsv"
+export VARSAGE_SCORES="${REF_DIR}/varsage_scores.tsv"
 
 echo "[CONFIG] Loaded successfully"
 echo "[CONFIG] Project: ${PROJECT_DIR}"
