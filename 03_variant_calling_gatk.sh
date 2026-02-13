@@ -21,6 +21,7 @@ check_file "${TRUTH_VCF}" || exit 1
 check_file "${HIGH_CONF_BED}" || exit 1
 
 OUT_DIR="${VARIANT_DIR}/${CALLER}"
+ensure_dir "${OUT_DIR}"
 
 #-------------------------------------------------------------------------------
 # 1. Run HaplotypeCaller
@@ -29,15 +30,15 @@ log_info "Running GATK HaplotypeCaller..."
 
 RAW_VCF="${OUT_DIR}/${PREFIX}_${CALLER}_raw.vcf.gz"
 
-gatk HaplotypeCaller \
+run_with_metrics "${CALLER}" "haplotypecaller" "${LOG_DIR}/${CALLER}.log" \
+    gatk HaplotypeCaller \
     --java-options "${JAVA_OPTS}" \
     -R "${REF_FASTA}" \
     -I "${FINAL_BAM}" \
     -O "${RAW_VCF}" \
     -L "${WES_BED}" \
     --standard-min-confidence-threshold-for-calling "${GATK_STAND_CALL_CONF}" \
-    --native-pair-hmm-threads "${THREADS}" \
-    2>&1 | tee "${LOG_DIR}/${CALLER}.log"
+    --native-pair-hmm-threads "${THREADS}"
 
 check_exit "HaplotypeCaller"
 

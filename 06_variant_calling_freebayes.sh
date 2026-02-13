@@ -22,6 +22,7 @@ check_file "${TRUTH_VCF}" || exit 1
 check_file "${HIGH_CONF_BED}" || exit 1
 
 OUT_DIR="${VARIANT_DIR}/${CALLER}"
+ensure_dir "${OUT_DIR}"
 
 #-------------------------------------------------------------------------------
 # 1. Run FreeBayes
@@ -30,17 +31,33 @@ log_info "Running FreeBayes..."
 
 RAW_VCF="${OUT_DIR}/${PREFIX}_${CALLER}_raw.vcf"
 
-freebayes \
-    -f "${REF_FASTA}" \
-    -b "${FINAL_BAM}" \
-    -t "${WES_BED}" \
-    --min-alternate-count "${FB_MIN_ALT_COUNT}" \
-    --min-alternate-fraction "${FB_MIN_ALT_FRACTION}" \
-    --min-mapping-quality "${MIN_MAPPING_QUALITY}" \
-    --min-base-quality "${MIN_BASE_QUALITY}" \
-    --genotype-qualities \
-    > "${RAW_VCF}" \
-    2> "${LOG_DIR}/${CALLER}.log"
+if command -v /usr/bin/time >/dev/null 2>&1; then
+    /usr/bin/time -v -o "${LOG_DIR}/${CALLER}.log.time" \
+        freebayes \
+        -f "${REF_FASTA}" \
+        -b "${FINAL_BAM}" \
+        -t "${WES_BED}" \
+        --min-alternate-count "${FB_MIN_ALT_COUNT}" \
+        --min-alternate-fraction "${FB_MIN_ALT_FRACTION}" \
+        --min-mapping-quality "${MIN_MAPPING_QUALITY}" \
+        --min-base-quality "${MIN_BASE_QUALITY}" \
+        --genotype-qualities \
+        > "${RAW_VCF}" \
+        2> "${LOG_DIR}/${CALLER}.log"
+    append_resource_metrics "${CALLER}" "run_freebayes" "${LOG_DIR}/${CALLER}.log.time"
+else
+    freebayes \
+        -f "${REF_FASTA}" \
+        -b "${FINAL_BAM}" \
+        -t "${WES_BED}" \
+        --min-alternate-count "${FB_MIN_ALT_COUNT}" \
+        --min-alternate-fraction "${FB_MIN_ALT_FRACTION}" \
+        --min-mapping-quality "${MIN_MAPPING_QUALITY}" \
+        --min-base-quality "${MIN_BASE_QUALITY}" \
+        --genotype-qualities \
+        > "${RAW_VCF}" \
+        2> "${LOG_DIR}/${CALLER}.log"
+fi
 
 check_exit "FreeBayes"
 

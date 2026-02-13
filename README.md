@@ -2,6 +2,14 @@
 
 Pipeline so sánh hiệu suất 4 variant caller: GATK, DeepVariant, Strelka2, FreeBayes.
 
+## Cập nhật chính của pipeline
+
+- Pipeline mặc định chạy theo dữ liệu **WES** (`--model_type=WES` với DeepVariant, `--exome` + `--callRegions` cho Strelka2, các bước gọi biến thể giới hạn theo `chr22_exome_targets_padded.bed`).
+- Tự động phát hiện số CPU khả dụng và tự chọn `THREADS` (không cần chọn sẵn CPU trong script).
+- Chỉ đo **runtime + CPU usage + Max RSS memory** ở 4 bước gọi biến thể (GATK/DeepVariant/Strelka2/FreeBayes), ghi vào `logs/resource_usage.tsv`.
+- Giới hạn tài nguyên Docker theo cấu hình máy (`MAX_MEMORY=14G`) để tránh vượt khả năng máy.
+- Thêm **Tầng B**: script đánh giá rủi ro chức năng của lỗi FP/FN và tính risk-weighted metrics.
+
 ## Quy trình thực hiện
 
 ### Phần I. Tạo cấu trúc folder
@@ -227,7 +235,27 @@ bash 03_variant_calling_gatk.sh
 bash 04_variant_calling_deepvariant.sh
 bash 05_variant_calling_strelka2.sh
 bash 06_variant_calling_freebayes.sh
+bash 07_functional_risk_assessment.sh
 ```
+
+Kết quả Tầng B được ghi tại:
+
+- `results/functional_risk/errors/<caller>/*_fp.vcf.gz`, `*_fn.vcf.gz`
+- `results/functional_risk/risk_weighted_summary.tsv`
+- `results/functional_risk/risk_weighted_details.tsv`
+
+Tầng B sẽ so sánh theo 2 lớp callset:
+
+- `raw` (PASS normalized)
+- `wes_standard` (lọc kiểu WES thường dùng: `QUAL >= 30` và `DP >= 10` khi có trường DP)
+
+và theo 5 mô hình risk-weight:
+
+- `consequence`
+- `alphamissense`
+- `alphagenome`
+- `varsage`
+- `max_all` (lấy score lớn nhất trong các nguồn)
 
 ## Cấu trúc thư mục
 

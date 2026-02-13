@@ -44,8 +44,11 @@ WES_BED_GZ_BASENAME=$(basename "${WES_BED_GZ}")
 #-------------------------------------------------------------------------------
 log_info "Configuring Strelka2..."
 
-docker run \
+run_with_metrics "${CALLER}" "configure" "${LOG_DIR}/${CALLER}_config.log" \
+    docker run \
     --rm \
+    --cpus "${THREADS}" \
+    --memory "${MAX_MEMORY}" \
     -v "${ABS_REF_DIR}:/ref:ro" \
     -v "${ABS_PREPROC_DIR}:/input:ro" \
     -v "${ABS_OUT_DIR}:/output" \
@@ -55,8 +58,7 @@ docker run \
     --referenceFasta "/ref/${REF_BASENAME}" \
     --callRegions "/ref/${WES_BED_GZ_BASENAME}" \
     --exome \
-    --runDir "/output/strelka_run" \
-    2>&1 | tee "${LOG_DIR}/${CALLER}_config.log"
+    --runDir "/output/strelka_run"
 
 check_exit "Strelka2 config"
 
@@ -65,16 +67,18 @@ check_exit "Strelka2 config"
 #-------------------------------------------------------------------------------
 log_info "Running Strelka2..."
 
-docker run \
+run_with_metrics "${CALLER}" "run_workflow" "${LOG_DIR}/${CALLER}_run.log" \
+    docker run \
     --rm \
+    --cpus "${THREADS}" \
+    --memory "${MAX_MEMORY}" \
     -v "${ABS_REF_DIR}:/ref:ro" \
     -v "${ABS_PREPROC_DIR}:/input:ro" \
     -v "${ABS_OUT_DIR}:/output" \
     ${STRELKA2_IMAGE} \
     /output/strelka_run/runWorkflow.py \
     -m local \
-    -j "${THREADS}" \
-    2>&1 | tee "${LOG_DIR}/${CALLER}_run.log"
+    -j "${THREADS}"
 
 check_exit "Strelka2 run"
 
