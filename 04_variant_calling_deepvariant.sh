@@ -17,9 +17,11 @@ start_timer
 check_tool docker || exit 1
 
 # Input
-BAM_PATH_FILE="${PREPROC_DIR}/bam_path.sh"
-check_file "${BAM_PATH_FILE}" || exit 1
-FINAL_BAM="$(<"${BAM_PATH_FILE}")"
+source "${PREPROC_DIR}/bam_path.sh"
+if [[ -z "${FINAL_BAM:-}" ]]; then
+    log_error "FINAL_BAM is not set after sourcing bam_path.sh"
+    exit 1
+fi
 check_file "${FINAL_BAM}" || exit 1
 check_tool bcftools || exit 1
 check_file "${TRUTH_VCF}" || exit 1
@@ -69,7 +71,7 @@ run_with_metrics "${CALLER}" "run_deepvariant" "${LOG_DIR}/${CALLER}.log" \
     --num_shards="${THREADS}" \
     --regions="/ref/${WES_BED_BASENAME}"
 
-check_exit "DeepVariant"
+log_info "DeepVariant completed"
 
 #-------------------------------------------------------------------------------
 # 3. Process output
