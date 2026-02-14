@@ -13,19 +13,7 @@ CALLER="gatk"
 log_info "===== STEP 03: ${CALLER} HaplotypeCaller ====="
 start_timer
 
-#-------------------------------------------------------------------------------
-# Input: lấy BAM path từ preprocessing
-#-------------------------------------------------------------------------------
-# bam_path.sh chứa dòng: FINAL_BAM=<path>
-# Chỉ cần source nó để có biến FINAL_BAM
-source "${PREPROC_DIR}/bam_path.sh"
-
-if [[ -z "${FINAL_BAM:-}" ]]; then
-    log_error "FINAL_BAM is not set after sourcing bam_path.sh"
-    exit 1
-fi
-check_file "${FINAL_BAM}" || exit 1
-
+FINAL_BAM="${PREPROC_DIR}/${PREFIX}_final.bam"
 check_tool gatk    || exit 1
 check_tool bcftools || exit 1
 check_file "${TRUTH_VCF}" || exit 1
