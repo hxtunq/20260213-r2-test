@@ -11,10 +11,12 @@ source "${SCRIPT_DIR}/scripts/helper_functions.sh"
 
 CALLER="deepvariant"
 log_info "===== STEP 04: ${CALLER} (Docker) ====="
-start_timer
 
+# Check Docker
 check_tool docker || exit 1
-FINAL_BAM="${PREPROC_DIR}/${PREFIX}_final.bam"
+
+# Input
+source "${PREPROC_DIR}/bam_path.sh"
 check_file "${FINAL_BAM}" || exit 1
 check_tool bcftools || exit 1
 check_file "${TRUTH_VCF}" || exit 1
@@ -41,11 +43,11 @@ WES_BED_BASENAME=$(basename "${WES_BED}")
 log_info "Running DeepVariant via Docker..."
 log_info "  Image: ${DEEPVARIANT_IMAGE}"
 log_info "  Model: WES"
+start_timer
 
 DOCKER_USER="$(id -u)":"$(id -g)"
 
-run_with_metrics "${CALLER}" "run_deepvariant" "${LOG_DIR}/${CALLER}.log" \
-    docker run \
+docker run \
     --rm \
     --user "${DOCKER_USER}" \
     --cpus "${THREADS}" \
@@ -62,7 +64,8 @@ run_with_metrics "${CALLER}" "run_deepvariant" "${LOG_DIR}/${CALLER}.log" \
     --output_gvcf="/output/${PREFIX}_${CALLER}.g.vcf.gz" \
     --intermediate_results_dir="/output/intermediate" \
     --num_shards="${THREADS}" \
-    --regions="/ref/${WES_BED_BASENAME}"
+    --regions="/ref/${WES_BED_BASENAME}" \
+    2>&1 | tee "${LOG_DIR}/${CALLER}.log"
 
 log_info "DeepVariant completed"
 
