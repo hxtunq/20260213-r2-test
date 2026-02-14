@@ -11,10 +11,12 @@ source "${SCRIPT_DIR}/scripts/helper_functions.sh"
 
 CALLER="strelka2"
 log_info "===== STEP 05: ${CALLER} Germline (Docker) ====="
-start_timer
 
+# Check Docker
 check_tool docker || exit 1
-FINAL_BAM="${PREPROC_DIR}/${PREFIX}_final.bam"
+
+# Input
+source "${PREPROC_DIR}/bam_path.sh"
 check_file "${FINAL_BAM}" || exit 1
 check_tool bcftools || exit 1
 check_file "${TRUTH_VCF}" || exit 1
@@ -40,9 +42,9 @@ WES_BED_GZ_BASENAME=$(basename "${WES_BED_GZ}")
 # 2. Configure Strelka2 via Docker
 #-------------------------------------------------------------------------------
 log_info "Configuring Strelka2..."
+start_timer
 
-run_with_metrics "${CALLER}" "configure" "${LOG_DIR}/${CALLER}_config.log" \
-    docker run \
+docker run \
     --rm \
     --cpus "${THREADS}" \
     --memory "${MAX_MEMORY}" \
@@ -55,7 +57,8 @@ run_with_metrics "${CALLER}" "configure" "${LOG_DIR}/${CALLER}_config.log" \
     --referenceFasta "/ref/${REF_BASENAME}" \
     --callRegions "/ref/${WES_BED_GZ_BASENAME}" \
     --exome \
-    --runDir "/output/strelka_run"
+    --runDir "/output/strelka_run" \
+    2>&1 | tee "${LOG_DIR}/${CALLER}_config.log"
 
 log_info "Strelka2 config completed"
 
