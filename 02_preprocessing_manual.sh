@@ -99,3 +99,8 @@ samtools idxstats results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam \
 mosdepth -t 4 --by 1000 \
   results/preprocessing/SIMULATED_SAMPLE_chr22_coverage \
   results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam
+
+#-------------------------------------------------------------------------------
+# 7. Export for downstream scripts
+#-------------------------------------------------------------------------------
+echo "FINAL_BAM=results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam" > results/preprocessing/bam_path.sh
