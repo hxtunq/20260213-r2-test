@@ -80,6 +80,7 @@ run_with_metrics "${CALLER}" "run_workflow" "${LOG_DIR}/${CALLER}_run.log" \
     -m local \
     -j "${THREADS}"
 
+end_timer "05_${CALLER}"
 log_info "Strelka2 run completed"
 
 #-------------------------------------------------------------------------------
@@ -134,5 +135,4 @@ N_INDEL=$(bcftools view -H -v indels "${PASS_VCF}" | wc -l)
 
 log_info "Results:  $((N_SNP + N_INDEL)) variants (${N_SNP} SNPs, ${N_INDEL} INDELs)"
 
-end_timer "05_${CALLER}"
 log_info "===== ${CALLER} Complete ====="
