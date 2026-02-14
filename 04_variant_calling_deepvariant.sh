@@ -67,6 +67,7 @@ docker run \
     --regions="/ref/${WES_BED_BASENAME}" \
     2>&1 | tee "${LOG_DIR}/${CALLER}.log"
 
+end_timer "04_${CALLER}"
 log_info "DeepVariant completed"
 
 #-------------------------------------------------------------------------------
@@ -149,5 +150,4 @@ log_info "Results: $((N_SNP + N_INDEL)) variants (${N_SNP} SNPs, ${N_INDEL} INDE
 # Cleanup intermediate files
 rm -rf "${OUT_DIR}/intermediate"
 
-end_timer "04_${CALLER}"
 log_info "===== ${CALLER} Complete ====="
