@@ -95,12 +95,7 @@ samtools flagstat results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam \
 samtools idxstats results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam \
   > results/preprocessing/SIMULATED_SAMPLE_chr22_idxstats.txt
 
-# Optional: mosdepth for coverage (if installed)
-# mosdepth -t 4 --by 1000 \
-#   results/preprocessing/SIMULATED_SAMPLE_chr22_coverage \
-#   results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam
-
-#-------------------------------------------------------------------------------
-# 7. Export for downstream scripts
-#-------------------------------------------------------------------------------
-echo "results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam" > results/preprocessing/bam_path.sh
+# mosdepth for coverage
+mosdepth -t 4 --by 1000 \
+  results/preprocessing/SIMULATED_SAMPLE_chr22_coverage \
+  results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam
