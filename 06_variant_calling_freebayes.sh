@@ -11,9 +11,9 @@ source "${SCRIPT_DIR}/scripts/helper_functions.sh"
 
 CALLER="freebayes"
 log_info "===== STEP 06: ${CALLER} ====="
-start_timer
 
-FINAL_BAM="${PREPROC_DIR}/${PREFIX}_final.bam"
+# Input
+source "${PREPROC_DIR}/bam_path.sh"
 check_file "${FINAL_BAM}" || exit 1
 check_tool freebayes || exit 1
 check_tool bcftools || exit 1
@@ -21,7 +21,6 @@ check_file "${TRUTH_VCF}" || exit 1
 check_file "${HIGH_CONF_BED}" || exit 1
 
 OUT_DIR="${VARIANT_DIR}/${CALLER}"
-ensure_dir "${OUT_DIR}"
 
 #-------------------------------------------------------------------------------
 # 1. Run FreeBayes
@@ -29,6 +28,8 @@ ensure_dir "${OUT_DIR}"
 log_info "Running FreeBayes..."
 
 RAW_VCF="${OUT_DIR}/${PREFIX}_${CALLER}_raw.vcf"
+
+start_timer
 
 if command -v /usr/bin/time >/dev/null 2>&1; then
     /usr/bin/time -v -o "${LOG_DIR}/${CALLER}.log.time" \
@@ -58,6 +59,7 @@ else
         2> "${LOG_DIR}/${CALLER}.log"
 fi
 
+end_timer "06_${CALLER}"
 log_info "FreeBayes completed"
 
 # Compress and index
@@ -128,5 +130,4 @@ N_INDEL=$(bcftools view -H -v indels "${PASS_VCF}" | wc -l)
 
 log_info "Results: $((N_SNP + N_INDEL)) variants (${N_SNP} SNPs, ${N_INDEL} INDELs)"
 
-end_timer "06_${CALLER}"
 log_info "===== ${CALLER} Complete ====="
