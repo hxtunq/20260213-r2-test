@@ -17,7 +17,9 @@ start_timer
 check_tool docker || exit 1
 
 # Input
-source "${PREPROC_DIR}/bam_path.sh"
+BAM_PATH_FILE="${PREPROC_DIR}/bam_path.sh"
+check_file "${BAM_PATH_FILE}" || exit 1
+FINAL_BAM="$(<"${BAM_PATH_FILE}")"
 check_file "${FINAL_BAM}" || exit 1
 check_tool bcftools || exit 1
 check_file "${TRUTH_VCF}" || exit 1
