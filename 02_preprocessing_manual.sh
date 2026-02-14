@@ -2,7 +2,7 @@
 #===============================================================================
 # STEP 02: Preprocessing (GATK Best Practices - nf-core/sarek)
 # Manual commands without variable expansion.
-# Pipeline: FastQC → fastp → BWA-MEM → MarkDuplicates → BQSR
+# Pipeline: FastQC → BWA-MEM → MarkDuplicates → BQSR
 #===============================================================================
 
 set -euo pipefail
@@ -18,50 +18,22 @@ fastqc -t 4 \
   2>&1 | tee logs/fastqc_raw.log
 
 #-------------------------------------------------------------------------------
-# 2. fastp - Trimming and filtering
-#-------------------------------------------------------------------------------
-fastp \
-  -i data/simulated/SIMULATED_SAMPLE_chr22_R1.fastq.gz \
-  -I data/simulated/SIMULATED_SAMPLE_chr22_R2.fastq.gz \
-  -o results/preprocessing/SIMULATED_SAMPLE_chr22_trimmed_R1.fastq.gz \
-  -O results/preprocessing/SIMULATED_SAMPLE_chr22_trimmed_R2.fastq.gz \
-  --qualified_quality_phred 20 \
-  --length_required 50 \
-  --cut_front --cut_tail \
-  --cut_window_size 4 \
-  --cut_mean_quality 20 \
-  --thread 4 \
-  --json results/preprocessing/SIMULATED_SAMPLE_chr22_fastp.json \
-  --html results/preprocessing/SIMULATED_SAMPLE_chr22_fastp.html \
-  2>&1 | tee logs/fastp.log
-
-#-------------------------------------------------------------------------------
-# 3. FastQC - Trimmed reads
-#-------------------------------------------------------------------------------
-mkdir -p results/preprocessing/fastqc_trimmed
-fastqc -t 4 \
-  -o results/preprocessing/fastqc_trimmed \
-  results/preprocessing/SIMULATED_SAMPLE_chr22_trimmed_R1.fastq.gz \
-  results/preprocessing/SIMULATED_SAMPLE_chr22_trimmed_R2.fastq.gz \
-  2>&1 | tee logs/fastqc_trimmed.log
-
-#-------------------------------------------------------------------------------
-# 4. BWA-MEM - Alignment
+# 2. BWA-MEM - Alignment (directly from raw FASTQ after FastQC)
 #-------------------------------------------------------------------------------
 bwa mem \
   -t 4 \
   -R "@RG\tID:SIMULATED_SAMPLE\tSM:SIMULATED_SAMPLE\tPL:ILLUMINA\tLB:lib1\tPU:unit1" \
   -M \
   data/reference/chr22.fa \
-  results/preprocessing/SIMULATED_SAMPLE_chr22_trimmed_R1.fastq.gz \
-  results/preprocessing/SIMULATED_SAMPLE_chr22_trimmed_R2.fastq.gz \
+  data/simulated/SIMULATED_SAMPLE_chr22_R1.fastq.gz \
+  data/simulated/SIMULATED_SAMPLE_chr22_R2.fastq.gz \
   2> logs/bwa_mem.log | \
   samtools sort -@ 4 -m 2G -o results/preprocessing/SIMULATED_SAMPLE_chr22_aligned.bam -
 
 samtools index results/preprocessing/SIMULATED_SAMPLE_chr22_aligned.bam
 
 #-------------------------------------------------------------------------------
-# 5. GATK MarkDuplicates
+# 3. GATK MarkDuplicates
 #-------------------------------------------------------------------------------
 gatk MarkDuplicates \
   --java-options "-Xmx12G -XX:ParallelGCThreads=2" \
@@ -74,7 +46,7 @@ gatk MarkDuplicates \
   2>&1 | tee logs/markduplicates.log
 
 #-------------------------------------------------------------------------------
-# 6. GATK BaseRecalibrator & ApplyBQSR
+# 4. GATK BaseRecalibrator & ApplyBQSR
 #-------------------------------------------------------------------------------
 # Ensure known-sites VCFs match the "chr" naming convention if needed.
 # If your VCFs use "22" instead of "chr22", run:
@@ -100,7 +72,7 @@ gatk ApplyBQSR \
 samtools index results/preprocessing/SIMULATED_SAMPLE_chr22_recal.bam
 
 #-------------------------------------------------------------------------------
-# 7. Filter by mapping quality
+# 5. Filter by mapping quality
 #-------------------------------------------------------------------------------
 samtools view \
   -@ 4 \
@@ -113,7 +85,7 @@ samtools view \
 samtools index results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam
 
 #-------------------------------------------------------------------------------
-# 8. Alignment statistics (samtools stats, mosdepth)
+# 6. Alignment statistics (samtools stats, mosdepth)
 #-------------------------------------------------------------------------------
 samtools stats results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam \
   > results/preprocessing/SIMULATED_SAMPLE_chr22_stats.txt
@@ -128,7 +100,7 @@ samtools idxstats results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam \
 #   results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam
 
 #-------------------------------------------------------------------------------
-# 9. Export for downstream scripts
+# 7. Export for downstream scripts
 #-------------------------------------------------------------------------------
 echo "FINAL_BAM=results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam" \
   > results/preprocessing/bam_path.sh

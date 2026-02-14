@@ -1,7 +1,7 @@
 #!/bin/bash
 #===============================================================================
 # STEP 02: Preprocessing (GATK Best Practices - nf-core/sarek)
-# Pipeline: FastQC → fastp → BWA-MEM → MarkDuplicates → BQSR
+# Pipeline: FastQC → BWA-MEM → MarkDuplicates → BQSR
 #===============================================================================
 
 set -euo pipefail
@@ -23,7 +23,7 @@ check_file "${R2}" || exit 1
 #-------------------------------------------------------------------------------
 # 1. FastQC - Raw reads quality control
 #-------------------------------------------------------------------------------
-log_info "[1/6] FastQC on raw reads..."
+log_info "[1/4] FastQC on raw reads..."
 
 ensure_dir "${PREPROC_DIR}/fastqc_raw"
 fastqc -t "${THREADS}" -o "${PREPROC_DIR}/fastqc_raw" "${R1}" "${R2}" \
@@ -32,43 +32,9 @@ fastqc -t "${THREADS}" -o "${PREPROC_DIR}/fastqc_raw" "${R1}" "${R2}" \
 check_exit "FastQC raw"
 
 #-------------------------------------------------------------------------------
-# 2. fastp - Trimming and filtering
+# 2. BWA-MEM - Alignment (directly from raw FASTQ after FastQC)
 #-------------------------------------------------------------------------------
-log_info "[2/6] fastp trimming..."
-
-TRIM_R1="${PREPROC_DIR}/${PREFIX}_trimmed_R1.fastq.gz"
-TRIM_R2="${PREPROC_DIR}/${PREFIX}_trimmed_R2.fastq.gz"
-
-fastp \
-    -i "${R1}" -I "${R2}" \
-    -o "${TRIM_R1}" -O "${TRIM_R2}" \
-    --qualified_quality_phred "${MIN_BASE_QUALITY}" \
-    --length_required "${MIN_READ_LENGTH}" \
-    --cut_front --cut_tail \
-    --cut_window_size 4 \
-    --cut_mean_quality "${MIN_BASE_QUALITY}" \
-    --thread "${THREADS}" \
-    --json "${PREPROC_DIR}/${PREFIX}_fastp.json" \
-    --html "${PREPROC_DIR}/${PREFIX}_fastp.html" \
-    2>&1 | tee "${LOG_DIR}/fastp.log"
-
-check_exit "fastp"
-
-#-------------------------------------------------------------------------------
-# 3. FastQC - Trimmed reads
-#-------------------------------------------------------------------------------
-log_info "[3/6] FastQC on trimmed reads..."
-
-ensure_dir "${PREPROC_DIR}/fastqc_trimmed"
-fastqc -t "${THREADS}" -o "${PREPROC_DIR}/fastqc_trimmed" "${TRIM_R1}" "${TRIM_R2}" \
-    2>&1 | tee "${LOG_DIR}/fastqc_trimmed.log"
-
-check_exit "FastQC trimmed"
-
-#-------------------------------------------------------------------------------
-# 4. BWA-MEM - Alignment
-#-------------------------------------------------------------------------------
-log_info "[4/6] BWA-MEM alignment..."
+log_info "[2/4] BWA-MEM alignment..."
 
 ALIGNED_BAM="${PREPROC_DIR}/${PREFIX}_aligned.bam"
 
@@ -77,7 +43,7 @@ bwa mem \
     -R "${READ_GROUP}" \
     -M \
     "${REF_FASTA}" \
-    "${TRIM_R1}" "${TRIM_R2}" \
+    "${R1}" "${R2}" \
     2> "${LOG_DIR}/bwa_mem.log" | \
 samtools sort -@ "${THREADS}" -m 2G -o "${ALIGNED_BAM}" -
 
@@ -86,9 +52,9 @@ samtools index "${ALIGNED_BAM}"
 check_exit "BWA-MEM"
 
 #-------------------------------------------------------------------------------
-# 5. GATK MarkDuplicates
+# 3. GATK MarkDuplicates
 #-------------------------------------------------------------------------------
-log_info "[5/6] GATK MarkDuplicates..."
+log_info "[3/4] GATK MarkDuplicates..."
 
 MARKED_BAM="${PREPROC_DIR}/${PREFIX}_marked.bam"
 DUP_METRICS="${PREPROC_DIR}/${PREFIX}_dup_metrics.txt"
@@ -106,9 +72,9 @@ gatk MarkDuplicates \
 check_exit "MarkDuplicates"
 
 #-------------------------------------------------------------------------------
-# 6. GATK BaseRecalibrator & ApplyBQSR
+# 4. GATK BaseRecalibrator & ApplyBQSR
 #-------------------------------------------------------------------------------
-log_info "[6/6] Base Quality Score Recalibration..."
+log_info "[4/4] Base Quality Score Recalibration..."
 
 # Ensure chromosome naming consistency
 ensure_chr_naming() {
@@ -169,7 +135,7 @@ samtools index "${FINAL_BAM}"
 check_exit "BQSR"
 
 #-------------------------------------------------------------------------------
-# 7. Filter by mapping quality
+# 5. Filter by mapping quality
 #-------------------------------------------------------------------------------
 log_info "Filtering by mapping quality (MAPQ >= ${MIN_MAPPING_QUALITY})..."
 
@@ -188,7 +154,7 @@ samtools index "${FILTERED_BAM}"
 check_exit "BAM filtering"
 
 #-------------------------------------------------------------------------------
-# 8. Alignment statistics (samtools stats, mosdepth)
+# 6. Alignment statistics (samtools stats, mosdepth)
 #-------------------------------------------------------------------------------
 log_info "Calculating alignment statistics..."
 
@@ -203,7 +169,7 @@ if check_tool mosdepth; then
 fi
 
 #-------------------------------------------------------------------------------
-# 9. Summary
+# 7. Summary
 #-------------------------------------------------------------------------------
 MAPPED=$(grep "reads mapped:" "${PREPROC_DIR}/${PREFIX}_stats.txt" | cut -f3)
 DUP_RATE=$(grep "PERCENT_DUPLICATION" "${DUP_METRICS}" -A1 | tail -1 | cut -f9 || echo "N/A")
