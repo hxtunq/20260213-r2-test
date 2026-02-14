@@ -56,8 +56,9 @@ gatk BaseRecalibrator \
   --java-options "-Xmx12G -XX:ParallelGCThreads=2" \
   -R data/reference/chr22.fa \
   -I results/preprocessing/SIMULATED_SAMPLE_chr22_marked.bam \
-  --known-sites data/reference/dbsnp_146.hg38.chr22.vcf.gz \
+  --known-sites data/reference/dbsnp138.hg38.chr22.vcf.gz \
   --known-sites data/reference/Mills_and_1000G_gold_standard.indels.hg38.chr22.vcf.gz \
+  --known-sites data/reference/1000G_phase1.snps.high_confidence.hg38.chr22.vcf.gz \
   -O results/preprocessing/SIMULATED_SAMPLE_chr22_recal.table \
   2>&1 | tee logs/baserecalibrator.log
 
