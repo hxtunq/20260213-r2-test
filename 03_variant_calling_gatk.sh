@@ -13,11 +13,20 @@ CALLER="gatk"
 log_info "===== STEP 03: ${CALLER} HaplotypeCaller ====="
 start_timer
 
-# Input
-BAM_PATH_FILE="${PREPROC_DIR}/bam_path.sh"
-check_file "${BAM_PATH_FILE}" || exit 1
-FINAL_BAM="$(<"${BAM_PATH_FILE}")"
+#-------------------------------------------------------------------------------
+# Input: lấy BAM path từ preprocessing
+#-------------------------------------------------------------------------------
+# bam_path.sh chứa dòng: FINAL_BAM=<path>
+# Chỉ cần source nó để có biến FINAL_BAM
+source "${PREPROC_DIR}/bam_path.sh"
+
+if [[ -z "${FINAL_BAM:-}" ]]; then
+    log_error "FINAL_BAM is not set after sourcing bam_path.sh"
+    exit 1
+fi
 check_file "${FINAL_BAM}" || exit 1
+
+check_tool gatk    || exit 1
 check_tool bcftools || exit 1
 check_file "${TRUTH_VCF}" || exit 1
 check_file "${HIGH_CONF_BED}" || exit 1
@@ -42,7 +51,7 @@ run_with_metrics "${CALLER}" "haplotypecaller" "${LOG_DIR}/${CALLER}.log" \
     --standard-min-confidence-threshold-for-calling "${GATK_STAND_CALL_CONF}" \
     --native-pair-hmm-threads "${THREADS}"
 
-check_exit "HaplotypeCaller"
+log_info "HaplotypeCaller completed"
 
 #-------------------------------------------------------------------------------
 # 2. Hard filtering (GATK Best Practices)
