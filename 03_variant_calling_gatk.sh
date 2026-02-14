@@ -11,16 +11,15 @@ source "${SCRIPT_DIR}/scripts/helper_functions.sh"
 
 CALLER="gatk"
 log_info "===== STEP 03: ${CALLER} HaplotypeCaller ====="
-start_timer
 
-FINAL_BAM="${PREPROC_DIR}/${PREFIX}_final.bam"
-check_tool gatk    || exit 1
+# Input
+source "${PREPROC_DIR}/bam_path.sh"
+check_file "${FINAL_BAM}" || exit 1
 check_tool bcftools || exit 1
 check_file "${TRUTH_VCF}" || exit 1
 check_file "${HIGH_CONF_BED}" || exit 1
 
 OUT_DIR="${VARIANT_DIR}/${CALLER}"
-ensure_dir "${OUT_DIR}"
 
 #-------------------------------------------------------------------------------
 # 1. Run HaplotypeCaller
@@ -29,15 +28,17 @@ log_info "Running GATK HaplotypeCaller..."
 
 RAW_VCF="${OUT_DIR}/${PREFIX}_${CALLER}_raw.vcf.gz"
 
-run_with_metrics "${CALLER}" "haplotypecaller" "${LOG_DIR}/${CALLER}.log" \
-    gatk HaplotypeCaller \
+start_timer
+
+gatk HaplotypeCaller \
     --java-options "${JAVA_OPTS}" \
     -R "${REF_FASTA}" \
     -I "${FINAL_BAM}" \
     -O "${RAW_VCF}" \
     -L "${WES_BED}" \
     --standard-min-confidence-threshold-for-calling "${GATK_STAND_CALL_CONF}" \
-    --native-pair-hmm-threads "${THREADS}"
+    --native-pair-hmm-threads "${THREADS}" \
+    2>&1 | tee "${LOG_DIR}/${CALLER}.log"
 
 log_info "HaplotypeCaller completed"
 
@@ -68,6 +69,7 @@ gatk MergeVcfs \
     -I "${OUT_DIR}/indels_filtered.vcf.gz" \
     -O "${OUT_DIR}/${PREFIX}_${CALLER}_filtered.vcf.gz"
 
+end_timer "03_${CALLER}"
 #-------------------------------------------------------------------------------
 # 3. Extract PASS variants
 #-------------------------------------------------------------------------------
@@ -107,5 +109,4 @@ N_INDEL=$(bcftools view -H -v indels "${PASS_VCF}" | wc -l)
 
 log_info "Results:  $((N_SNP + N_INDEL)) variants (${N_SNP} SNPs, ${N_INDEL} INDELs)"
 
-end_timer "03_${CALLER}"
 log_info "===== ${CALLER} Complete ====="
