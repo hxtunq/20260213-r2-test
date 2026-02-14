@@ -13,12 +13,7 @@ CALLER="freebayes"
 log_info "===== STEP 06: ${CALLER} ====="
 start_timer
 
-# Input
-source "${PREPROC_DIR}/bam_path.sh"
-if [[ -z "${FINAL_BAM:-}" ]]; then
-    log_error "FINAL_BAM is not set after sourcing bam_path.sh"
-    exit 1
-fi
+FINAL_BAM="${PREPROC_DIR}/${PREFIX}_final.bam"
 check_file "${FINAL_BAM}" || exit 1
 check_tool freebayes || exit 1
 check_tool bcftools || exit 1
