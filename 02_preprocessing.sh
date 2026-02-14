@@ -180,8 +180,7 @@ log_info "  Mapped reads: ${MAPPED}"
 log_info "  Duplication rate: ${DUP_RATE}"
 
 # Export for downstream scripts
-export FINAL_BAM="${FILTERED_BAM}"
-echo "FINAL_BAM=${FILTERED_BAM}" > "${PREPROC_DIR}/bam_path.sh"
+echo "${FILTERED_BAM}" > "${PREPROC_DIR}/bam_path.sh"
 
 end_timer "02_preprocessing"
 log_info "===== Preprocessing Complete ====="
