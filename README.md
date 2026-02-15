@@ -138,10 +138,11 @@ git clone https://github.com/yjx1217/simuG.git
 # dùng simuG tạo đột biến
 perl simuG/simuG.pl \
   -refseq reference/chr22.fa \
-  -snp_count 70000 \
-  -indel_count 35000 \
+  -snp_count 60000 \
+  -indel_count 30000 \
   -indel_min_len 1 \
   -indel_max_len 5 \
+  -titv_ratio 2.0 \
   -prefix simulated/SIMULATED_SAMPLE_chr22
 ```
 
