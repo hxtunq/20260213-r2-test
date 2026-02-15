@@ -1,3 +1,4 @@
+```bash
 REF=data/reference/chr22.fa
 BED=data/reference/chr22_non_N_regions.bed
 SDF=results/benchmarks/ref/chr22.sdf
@@ -18,17 +19,19 @@ bcftools sort "$TMP" -Oz -o "$ALL_NORM"
 rm -f "$TMP"
 tabix -f -p vcf "$ALL_NORM"
 
-# 3) vcfeval lại
 OUTDIR=results/benchmarks/rtg_vcfeval/gatk_all
+
 rm -rf "$OUTDIR"
-mkdir -p "$OUTDIR"
+mkdir -p "$(dirname "$OUTDIR")"
 
 RTG_MEM=14G rtg vcfeval \
-  --baseline "$BASELINE" \
-  --calls "$ALL_NORM" \
-  --template "$SDF" \
-  --bed-regions "$BED" \
+  --baseline results/benchmarks/truth/truth.gt.norm.vcf.gz \
+  --calls results/variants/gatk/gatk_all.norm.vcf.gz \
+  --template results/benchmarks/ref/chr22.sdf \
+  --bed-regions data/reference/chr22_non_N_regions.bed \
   --output "$OUTDIR" \
   --threads 4
 
 cat "$OUTDIR"/*.summary.txt
+
+```
