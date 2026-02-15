@@ -217,16 +217,77 @@ bash 08_benchmark_rtg_vcfeval.sh
 bash 07_functional_risk_assessment.sh
 ```
 
+```bash
+# pwd: variant-benchmarking
+# khai báo đường dẫn
+REF=data/reference/chr22.fa
+BED=data/reference/chr22_non_N_regions.bed
+TRUTH=$(ls -1 data/simulated/*_truth.vcf.gz | head -n 1)
+# tạo thư mục lưu output vcfeval
+mkdir -p results/benchmarks/truth results/benchmarks/ref results/benchmarks/rtg_vcfeval
+```
+
+```bash
+#pwd: variant-benchmarking
+# normalize truth set
+bcftools norm -f "$REF" -m -both "$TRUTH" -Oz -o results/benchmarks/truth/truth.norm.vcf.gz
+tabix -f -p vcf results/benchmarks/truth/truth.norm.vcf.gz
+#4 tạo SDF template cho RTG
+rtg format -o results/benchmarks/ref/chr22.sdf "$REF"
+```
+
+```bash
+#pwd: variant-benchmarking
+QUERY=$(ls -1 results/variants/gatk/*_gatk_pass.norm.vcf.gz | head -n 1)
+RTG_MEM=14G rtg vcfeval \
+  --baseline results/benchmarks/truth/truth.norm.vcf.gz \
+  --calls "$QUERY" \
+  --template results/benchmarks/ref/chr22.sdf \
+  --bed-regions "$BED" \
+  --output results/benchmarks/rtg_vcfeval/gatk \
+  --threads 4
+```
+
+```bash
+#pwd: variant-benchmarking
+QUERY=$(ls -1 results/variants/deepvariant/*_deepvariant_pass.norm.vcf.gz | head -n 1)
+RTG_MEM=14G rtg vcfeval \
+  --baseline results/benchmarks/truth/truth.norm.vcf.gz \
+  --calls "$QUERY" \
+  --template results/benchmarks/ref/chr22.sdf \
+  --bed-regions "$BED" \
+  --output results/benchmarks/rtg_vcfeval/deepvariant \
+  --threads 4
+```
+
+```bash
+#pwd: variant-benchmarking
+QUERY=$(ls -1 results/variants/strelka2/*_strelka2_pass.norm.vcf.gz | head -n 1)
+RTG_MEM=14G rtg vcfeval \
+  --baseline results/benchmarks/truth/truth.norm.vcf.gz \
+  --calls "$QUERY" \
+  --template results/benchmarks/ref/chr22.sdf \
+  --bed-regions "$BED" \
+  --output results/benchmarks/rtg_vcfeval/strelka2 \
+  --threads 4
+```
+
+```bash
+#pwd: variant-benchmarking
+QUERY=$(ls -1 results/variants/freebayes/*_freebayes_pass.norm.vcf.gz | head -n 1)
+RTG_MEM=14G rtg vcfeval \
+  --baseline results/benchmarks/truth/truth.norm.vcf.gz \
+  --calls "$QUERY" \
+  --template results/benchmarks/ref/chr22.sdf \
+  --bed-regions "$BED" \
+  --output results/benchmarks/rtg_vcfeval/freebayes \
+  --threads 4
+```
+
 Benchmark RTG vcfeval (Tầng A) sẽ được ghi tại:
 
 - `results/benchmarks/rtg_vcfeval/<caller>/` (chi tiết TP/FP/FN)
 - `results/benchmarks/rtg_vcfeval/vcfeval_summary.tsv` (bảng tổng hợp nhiều caller)
-
-Bạn có thể chạy riêng benchmark cho một số caller:
-
-```bash
-CALLERS="gatk deepvariant" bash 08_benchmark_rtg_vcfeval.sh
-```
 
 Kết quả Tầng B được ghi tại:
 
