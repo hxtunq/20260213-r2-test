@@ -93,6 +93,8 @@ export READ_GROUP="@RG\\tID:${SAMPLE_NAME}\\tSM:${SAMPLE_NAME}\\tPL:ILLUMINA\\tL
 export DEEPVARIANT_VERSION="1.6.1"
 export DEEPVARIANT_IMAGE="google/deepvariant:${DEEPVARIANT_VERSION}"
 export STRELKA2_IMAGE="quay.io/biocontainers/strelka:2.9.10--h9ee0642_1"
+export RTG_IMAGE="biocontainers/rtg-tools:3.12.1--hdfd78af_0"
+export HAP_IMAGE="pkrusche/hap.py:v0.3.15"
 
 #-------------------------------------------------------------------------------
 # VARIANT CALLER PARAMETERS
