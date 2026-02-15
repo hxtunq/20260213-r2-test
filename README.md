@@ -220,18 +220,25 @@ bash 07_functional_risk_assessment.sh
 ```bash
 # pwd: variant-benchmarking
 # khai báo đường dẫn
-REF=data/reference/chr22.fa
 BED=data/reference/chr22_non_N_regions.bed
-TRUTH=$(ls -1 data/simulated/*_truth.vcf.gz | head -n 1)
-# tạo thư mục lưu output vcfeval
-mkdir -p results/benchmarks/truth results/benchmarks/ref results/benchmarks/rtg_vcfeval
-```
+REF=data/reference/chr22.fa
+TRUTH_RAW=$(ls -1 data/simulated/*_truth.vcf.gz | head -n 1)
 
-```bash
-#pwd: variant-benchmarking
-# normalize truth set
-bcftools norm -f "$REF" -m -both "$TRUTH" -Oz -o results/benchmarks/truth/truth.norm.vcf.gz
-tabix -f -p vcf results/benchmarks/truth/truth.norm.vcf.gz
+mkdir -p results/benchmarks/truth
+
+# Add FORMAT + sample TRUTH with GT=1/1
+zcat "$TRUTH_RAW" | awk 'BEGIN{OFS="\t"}
+  /^##/ {print; next}
+  /^#CHROM/ {print $0,"FORMAT","TRUTH"; next}
+  {print $0,"GT","1/1"}' | bgzip -c > results/benchmarks/truth/truth.gt.vcf.gz
+
+tabix -f -p vcf results/benchmarks/truth/truth.gt.vcf.gz
+
+# Normalize (khuyến nghị để đồng bộ với calls)
+bcftools norm -f "$REF" -m -both results/benchmarks/truth/truth.gt.vcf.gz -Oz \
+  -o results/benchmarks/truth/truth.gt.norm.vcf.gz
+tabix -f -p vcf results/benchmarks/truth/truth.gt.norm.vcf.gz
+
 #4 tạo SDF template cho RTG
 rtg format -o results/benchmarks/ref/chr22.sdf "$REF"
 ```
@@ -240,7 +247,7 @@ rtg format -o results/benchmarks/ref/chr22.sdf "$REF"
 #pwd: variant-benchmarking
 QUERY=$(ls -1 results/variants/gatk/*_gatk_pass.norm.vcf.gz | head -n 1)
 RTG_MEM=14G rtg vcfeval \
-  --baseline results/benchmarks/truth/truth.norm.vcf.gz \
+  --baseline results/benchmarks/truth/truth.gt.norm.vcf.gz \
   --calls "$QUERY" \
   --template results/benchmarks/ref/chr22.sdf \
   --bed-regions "$BED" \
