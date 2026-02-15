@@ -35,7 +35,7 @@ if [[ ! -d "${SDF}" ]]; then
     --user "$(id -u)":"$(id -g)" \
     -v "${PROJECT_DIR}:/work" \
     -w /work \
-    biocontainers/rtg-tools:3.12.1--hdfd78af_0 \
+    "${RTG_IMAGE}" \
     rtg format --output "${SDF}" "${REF_FASTA}"
 fi
 
@@ -55,10 +55,11 @@ for c in "${CALLERS[@]}"; do
     --user "$(id -u)":"$(id -g)" \
     --cpus "${THREADS}" \
     --memory "${MAX_MEMORY}" \
+    -e RTG_MEM="${MAX_MEMORY}" \
     -v "${PROJECT_DIR}:/work" \
     -w /work \
-    biocontainers/rtg-tools:3.12.1--hdfd78af_0 \
-    rtg RTG_MEM="${MAX_MEMORY}" vcfeval \
+    "${RTG_IMAGE}" \
+    rtg vcfeval \
       --baseline "${TRUTH_NORM}" \
       --calls "${QUERY_NORM}" \
       --template "${SDF}" \
