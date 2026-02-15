@@ -213,7 +213,19 @@ bash 03_variant_calling_gatk.sh
 bash 04_variant_calling_deepvariant.sh
 bash 05_variant_calling_strelka2.sh
 bash 06_variant_calling_freebayes.sh
+bash 08_benchmark_rtg_vcfeval.sh
 bash 07_functional_risk_assessment.sh
+```
+
+Benchmark RTG vcfeval (Tầng A) sẽ được ghi tại:
+
+- `results/benchmarks/rtg_vcfeval/<caller>/` (chi tiết TP/FP/FN)
+- `results/benchmarks/rtg_vcfeval/vcfeval_summary.tsv` (bảng tổng hợp nhiều caller)
+
+Bạn có thể chạy riêng benchmark cho một số caller:
+
+```bash
+CALLERS="gatk deepvariant" bash 08_benchmark_rtg_vcfeval.sh
 ```
 
 Kết quả Tầng B được ghi tại:
