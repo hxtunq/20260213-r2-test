@@ -36,7 +36,6 @@ if command -v /usr/bin/time >/dev/null 2>&1; then
         freebayes \
         -f "${REF_FASTA}" \
         -b "${FINAL_BAM}" \
-        -t "${WES_BED}" \
         --min-alternate-count "${FB_MIN_ALT_COUNT}" \
         --min-alternate-fraction "${FB_MIN_ALT_FRACTION}" \
         --min-mapping-quality "${MIN_MAPPING_QUALITY}" \
@@ -49,7 +48,6 @@ else
     freebayes \
         -f "${REF_FASTA}" \
         -b "${FINAL_BAM}" \
-        -t "${WES_BED}" \
         --min-alternate-count "${FB_MIN_ALT_COUNT}" \
         --min-alternate-fraction "${FB_MIN_ALT_FRACTION}" \
         --min-mapping-quality "${MIN_MAPPING_QUALITY}" \
