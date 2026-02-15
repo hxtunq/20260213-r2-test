@@ -8,8 +8,22 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/config/config.sh"
 source "${SCRIPT_DIR}/scripts/helper_functions.sh"
 
-check_tool docker || exit 1
-check_tool bcftools || exit 1
+log_info "Start benchmark RTG vcfeval"
+
+missing_tools=()
+for tool in docker bcftools; do
+  if ! command -v "${tool}" >/dev/null 2>&1; then
+    missing_tools+=("${tool}")
+  fi
+done
+
+if [[ ${#missing_tools[@]} -gt 0 ]]; then
+  missing_csv=$(IFS=, ; echo "${missing_tools[*]}")
+  # In some wrappers stderr is hidden; print to both streams for easier troubleshooting.
+  log_error "Missing required tool(s): ${missing_csv}"
+  echo "[ERROR] Missing required tool(s): ${missing_csv}"
+  exit 1
+fi
 
 # Có thể override bằng biến môi trường, ví dụ:
 # CALLERS="gatk deepvariant" bash 08_benchmark_rtg_vcfeval.sh
