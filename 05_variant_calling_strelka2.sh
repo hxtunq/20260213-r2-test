@@ -66,8 +66,7 @@ log_info "Strelka2 config completed"
 #-------------------------------------------------------------------------------
 log_info "Running Strelka2..."
 
-run_with_metrics "${CALLER}" "run_workflow" "${LOG_DIR}/${CALLER}_run.log" \
-    docker run \
+docker run \
     --rm \
     --user "${DOCKER_USER}" \
     --cpus "${THREADS}" \
@@ -78,7 +77,8 @@ run_with_metrics "${CALLER}" "run_workflow" "${LOG_DIR}/${CALLER}_run.log" \
     ${STRELKA2_IMAGE} \
     python3 /output/strelka_run/runWorkflow.py \
     -m local \
-    -j "${THREADS}"
+    -j "${THREADS}" \
+    2>&1 | tee "${LOG_DIR}/${CALLER}_run.log"
 
 end_timer "05_${CALLER}"
 log_info "Strelka2 run completed"
