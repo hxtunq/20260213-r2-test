@@ -40,8 +40,8 @@ for c in "${CALLERS[@]}"; do
     --memory "${MAX_MEMORY}" \
     -v "${PROJECT_DIR}:/work" \
     -w /work \
-    biocontainers/hap.py:0.3.14--py27h5c5a3ab_0 \
-    hap.py \
+    ${HAPPY_IMAGE} \
+    /opt/hap.py/bin/hap.py \
       "${TRUTH_NORM}" \
       "${QUERY_NORM}" \
       --reference "${REF_FASTA}" \
