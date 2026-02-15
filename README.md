@@ -4,7 +4,7 @@ Pipeline so sánh hiệu suất 4 variant caller: GATK, DeepVariant, Strelka2, F
 
 ## Cập nhật chính của pipeline
 
-- Pipeline mặc định chạy theo dữ liệu **WES** (`--model_type=WES` với DeepVariant, `--exome` + `--callRegions` cho Strelka2, các bước gọi biến thể giới hạn theo `chr22_exome_targets_padded.bed`).
+- Pipeline mặc định chạy **toàn bộ chr22** (DeepVariant dùng `--model_type=WGS`; GATK/Strelka2/FreeBayes không còn giới hạn vùng exome ở bước gọi biến thể).
 - Tự động phát hiện số CPU khả dụng và tự chọn `THREADS` (không cần chọn sẵn CPU trong script).
 - Chỉ đo **runtime + CPU usage + Max RSS memory** ở 4 bước gọi biến thể (GATK/DeepVariant/Strelka2/FreeBayes), ghi vào `logs/resource_usage.tsv`.
 - Giới hạn tài nguyên Docker theo cấu hình máy (`MAX_MEMORY=14G`) để tránh vượt khả năng máy.
