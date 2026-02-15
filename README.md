@@ -225,22 +225,33 @@ REF=data/reference/chr22.fa
 TRUTH_RAW=$(ls -1 data/simulated/*_truth.vcf.gz | head -n 1)
 
 mkdir -p results/benchmarks/truth
+rm -f results/benchmarks/truth/truth.gt.vcf.gz* results/benchmarks/truth/truth.gt.norm.vcf.gz*
 
-# Add FORMAT + sample TRUTH with GT=1/1
-zcat "$TRUTH_RAW" | awk 'BEGIN{OFS="\t"}
+# Tạo truth có FORMAT+GT hợp lệ (có khai báo ##FORMAT cho GT)
+zcat "$TRUTH_RAW" | awk 'BEGIN{OFS="\t"; ff=0}
+  /^##fileformat=/ {ff=1; print; next}
   /^##/ {print; next}
-  /^#CHROM/ {print $0,"FORMAT","TRUTH"; next}
-  {print $0,"GT","1/1"}' | bgzip -c > results/benchmarks/truth/truth.gt.vcf.gz
+  /^#CHROM/ {
+    if(ff==0) print "##fileformat=VCFv4.2"
+    print "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">"
+    print $0,"FORMAT","TRUTH"
+    next
+  }
+  {print $0,"GT","1/1"}
+' | bgzip -c > results/benchmarks/truth/truth.gt.vcf.gz
 
 tabix -f -p vcf results/benchmarks/truth/truth.gt.vcf.gz
 
-# Normalize (khuyến nghị để đồng bộ với calls)
+# Normalize lại truth (có GT) để dùng cho vcfeval
 bcftools norm -f "$REF" -m -both results/benchmarks/truth/truth.gt.vcf.gz -Oz \
   -o results/benchmarks/truth/truth.gt.norm.vcf.gz
+
 tabix -f -p vcf results/benchmarks/truth/truth.gt.norm.vcf.gz
 
-#4 tạo SDF template cho RTG
+# tạo SDF template cho RTG
 rtg format -o results/benchmarks/ref/chr22.sdf "$REF"
+# check
+bcftools query -l results/benchmarks/truth/truth.gt.norm.vcf.gz
 ```
 
 ```bash
