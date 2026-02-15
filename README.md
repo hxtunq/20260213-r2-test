@@ -270,7 +270,7 @@ RTG_MEM=14G rtg vcfeval \
 #pwd: variant-benchmarking
 QUERY=$(ls -1 results/variants/deepvariant/*_deepvariant_pass.norm.vcf.gz | head -n 1)
 RTG_MEM=14G rtg vcfeval \
-  --baseline results/benchmarks/truth/truth.norm.vcf.gz \
+  --baseline results/benchmarks/truth/truth.gt.norm.vcf.gz \
   --calls "$QUERY" \
   --template results/benchmarks/ref/chr22.sdf \
   --bed-regions "$BED" \
@@ -282,7 +282,7 @@ RTG_MEM=14G rtg vcfeval \
 #pwd: variant-benchmarking
 QUERY=$(ls -1 results/variants/strelka2/*_strelka2_pass.norm.vcf.gz | head -n 1)
 RTG_MEM=14G rtg vcfeval \
-  --baseline results/benchmarks/truth/truth.norm.vcf.gz \
+  --baseline results/benchmarks/truth/truth.gt.norm.vcf.gz \
   --calls "$QUERY" \
   --template results/benchmarks/ref/chr22.sdf \
   --bed-regions "$BED" \
@@ -294,7 +294,7 @@ RTG_MEM=14G rtg vcfeval \
 #pwd: variant-benchmarking
 QUERY=$(ls -1 results/variants/freebayes/*_freebayes_pass.norm.vcf.gz | head -n 1)
 RTG_MEM=14G rtg vcfeval \
-  --baseline results/benchmarks/truth/truth.norm.vcf.gz \
+  --baseline results/benchmarks/truth/truth.gt.norm.vcf.gz \
   --calls "$QUERY" \
   --template results/benchmarks/ref/chr22.sdf \
   --bed-regions "$BED" \
