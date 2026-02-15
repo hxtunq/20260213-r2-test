@@ -33,7 +33,6 @@ ensure_dir "${STRELKA_RUNDIR}"
 ABS_REF_DIR=$(cd "${REF_DIR}" && pwd)
 ABS_PREPROC_DIR=$(cd "${PREPROC_DIR}" && pwd)
 ABS_OUT_DIR=$(cd "${OUT_DIR}" && pwd)
-DOCKER_USER="$(id -u):$(id -g)"
 
 BAM_BASENAME=$(basename "${FINAL_BAM}")
 REF_BASENAME=$(basename "${REF_FASTA}")
@@ -46,7 +45,6 @@ start_timer
 
 docker run \
     --rm \
-    --user "${DOCKER_USER}" \
     --cpus "${THREADS}" \
     --memory "${MAX_MEMORY}" \
     -v "${ABS_REF_DIR}:/ref:ro" \
@@ -68,14 +66,13 @@ log_info "Running Strelka2..."
 
 docker run \
     --rm \
-    --user "${DOCKER_USER}" \
     --cpus "${THREADS}" \
     --memory "${MAX_MEMORY}" \
     -v "${ABS_REF_DIR}:/ref:ro" \
     -v "${ABS_PREPROC_DIR}:/input:ro" \
     -v "${ABS_OUT_DIR}:/output" \
     ${STRELKA2_IMAGE} \
-    python3 /output/strelka_run/runWorkflow.py \
+    /output/strelka_run/runWorkflow.py \
     -m local \
     -j "${THREADS}" \
     2>&1 | tee "${LOG_DIR}/${CALLER}_run.log"
