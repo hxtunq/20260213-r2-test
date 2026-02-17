@@ -43,10 +43,9 @@ Scripts so sánh và đánh giá quy trình gọi biến thể của 4 công c�
     └── functional_risk/    # risk-weighted summary/details
 ```
 
-## 3. Thứ tự chạy pipeline
+## 3. Quy trình nghiên cứu
 
-Xem tại file [workflow.md](https://github.com/hxtunq/20260213-r2-test/blob/main/workflow.md).
-
+Quá trình nghiên cứu, so sánh và đánh giá được chạy theo thứ tự được mô tả trong tệp `workflow.md`.
 
 
 
