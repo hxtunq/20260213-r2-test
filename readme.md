@@ -2,7 +2,7 @@
 
 Scripts so sánh và đánh giá quy trình gọi biến thể của 4 công cụ gọi biến thể GATK, DeepVariant, Strelka2 và FreeBayes.
 
-## 1. Cấu trúc thư mục tại trạng thái ban đầu
+## 1. Cấu trúc thư mục ở giai đoạn ban đầu
 
 ```text
 .
@@ -23,24 +23,23 @@ Scripts so sánh và đánh giá quy trình gọi biến thể của 4 công c�
     └── risk_weighted_eval.py
 ```
 
-## 2. Cấu trúc thư mục sau khi chạy qua các câu lệnh từ workflow.md và stages/
+## 2. Cấu trúc thư mục ở giai đoạn hoàn tất quy trình
 
 ```text
 ├── data/
 │   ├── reference/          # reference genome, index, known-sites
 │   └── simulated/          # truth VCF + FASTQ mô phỏng
-├── log/                    # file log chứa dữ liệu chạy của giai đoạn tiền xử lý dữ liệu trước gọi biến thể và gọi biến thể
+├── log/                    # log dữ liệu chạy từ các tools
 └── results/
     ├── preprocessing/      # BAM/metrics sau preprocessing
+    |   └── fastqc_raw      # kiểm tra chất lượng 2 reads được giả lập từ ART
     ├── variants/           # VCF theo từng caller
     │   ├── gatk/
     │   ├── deepvariant/
     │   ├── strelka2/
     │   └── freebayes/
     ├── benchmarks/
-    │   ├── ref/
-    │   ├── rtg_vcfeval/    # TP/FP/FN summary and merged
-    │   └── truth/
+    │   └── rtg_vcfeval/    # TP/FP/FN summary and merged
     └── functional_risk/    # risk-weighted summary/details
 ```
 
