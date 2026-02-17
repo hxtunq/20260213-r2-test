@@ -6,8 +6,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/config/config.sh"
-source "${SCRIPT_DIR}/scripts/helper_functions.sh"
+source "${SCRIPT_DIR}/../config/config.sh"
+source "${SCRIPT_DIR}/../scripts/helper_functions.sh"
 
 CALLER="gatk"
 log_info "===== STEP 03: ${CALLER} HaplotypeCaller ====="
@@ -90,12 +90,12 @@ tabix -p vcf "${OUT_DIR}/${PREFIX}_${CALLER}_indel.vcf.gz"
 log_info "Normalizing variants for benchmarking..."
 
 NORMALIZED_VCF="${OUT_DIR}/${PREFIX}_${CALLER}_pass.norm.vcf.gz"
-"${SCRIPT_DIR}/scripts/normalize_vcf.sh" "${PASS_VCF}" "${NORMALIZED_VCF}" "${REF_FASTA}"
+"${SCRIPT_DIR}/../scripts/normalize_vcf.sh" "${PASS_VCF}" "${NORMALIZED_VCF}" "${REF_FASTA}"
 
 TRUTH_NORM="${BENCH_DIR}/truth/${PREFIX}_truth.norm.vcf.gz"
 if [[ ! -f "${TRUTH_NORM}" ]]; then
     ensure_dir "$(dirname "${TRUTH_NORM}")"
-    "${SCRIPT_DIR}/scripts/normalize_vcf.sh" "${TRUTH_VCF}" "${TRUTH_NORM}" "${REF_FASTA}"
+    "${SCRIPT_DIR}/../scripts/normalize_vcf.sh" "${TRUTH_VCF}" "${TRUTH_NORM}" "${REF_FASTA}"
 fi
 
 #-------------------------------------------------------------------------------

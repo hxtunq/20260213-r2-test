@@ -1,12 +1,12 @@
 #!/bin/bash
 #===============================================================================
-# STEP 08: Benchmark PASS+normalized VCF của nhiều caller bằng RTG vcfeval
+# STEP 07: Benchmark PASS+normalized VCF của nhiều caller bằng RTG vcfeval
 #===============================================================================
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/config/config.sh"
-source "${SCRIPT_DIR}/scripts/helper_functions.sh"
+source "${SCRIPT_DIR}/../config/config.sh"
+source "${SCRIPT_DIR}/../scripts/helper_functions.sh"
 
 log_info "Start benchmark RTG vcfeval"
 
@@ -26,7 +26,7 @@ if [[ ${#missing_tools[@]} -gt 0 ]]; then
 fi
 
 # Có thể override bằng biến môi trường, ví dụ:
-# CALLERS="gatk deepvariant" bash 08_benchmark_rtg_vcfeval.sh
+# CALLERS="gatk deepvariant" bash pipeline/07_benchmark_rtg_vcfeval.sh
 CALLERS_RAW="${CALLERS:-gatk deepvariant strelka2 freebayes}"
 IFS=' ' read -r -a CALLER_LIST <<< "${CALLERS_RAW}"
 
@@ -53,7 +53,7 @@ fi
 # 1) Normalize truth nếu chưa có
 if [[ ! -f "${TRUTH_NORM}" ]]; then
   log_info "Normalize truth VCF -> ${TRUTH_NORM}"
-  "${SCRIPT_DIR}/scripts/normalize_vcf.sh" "${TRUTH_VCF}" "${TRUTH_NORM}" "${REF_FASTA}"
+  "${SCRIPT_DIR}/../scripts/normalize_vcf.sh" "${TRUTH_VCF}" "${TRUTH_NORM}" "${REF_FASTA}"
 fi
 
 # 2) Tạo RTG template SDF một lần

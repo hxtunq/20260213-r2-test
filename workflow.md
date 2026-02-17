@@ -196,12 +196,12 @@ Sau khi hoàn thành PHẦN 1 và PHẦN 2, chạy các script theo thứ tự:
 ```bash
 #pwd: variant-benchmarking
 
-bash 02_preprocessing.sh
-bash 03_variant_calling_gatk.sh
-bash 04_variant_calling_deepvariant.sh
-bash 05_variant_calling_strelka2.sh
-bash 06_variant_calling_freebayes.sh
-bash 08_benchmark_rtg_vcfeval.sh
+bash 02_preprocessing_manual.sh
+bash pipeline/03_variant_calling_gatk.sh
+bash pipeline/04_variant_calling_deepvariant.sh
+bash pipeline/05_variant_calling_strelka2.sh
+bash pipeline/06_variant_calling_freebayes.sh
+bash pipeline/07_benchmark_rtg_vcfeval.sh
 bash 07_functional_risk_assessment.sh
 ```
 
