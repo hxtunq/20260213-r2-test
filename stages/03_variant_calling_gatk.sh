@@ -51,16 +51,23 @@ gatk SelectVariants -V "${RAW_VCF}" -select-type SNP -O "${OUT_DIR}/snps_raw.vcf
 gatk VariantFiltration \
     -V "${OUT_DIR}/snps_raw.vcf.gz" \
     -O "${OUT_DIR}/snps_filtered.vcf.gz" \
-    --filter-expression "QD < 2.0 || FS > 60.0 || MQ < 40.0 || SOR > 3.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0" \
-    --filter-name "SNP_FILTER"
+    --filter-expression "QD < 2.0" --filter-name "QD2" \
+    --filter-expression "QUAL < 30.0" --filter-name "QUAL30" \
+    --filter-expression "SOR > 3.0" --filter-name "SOR3" \
+    --filter-expression "FS > 60.0" --filter-name "FS60" \
+    --filter-expression "MQ < 40.0" --filter-name "MQ40" \
+    --filter-expression "MQRankSum < -12.5" --filter-name "MQRankSum-12.5" \
+    --filter-expression "ReadPosRankSum < -8.0" --filter-name "ReadPosRankSum-8"
 
 # INDELs
 gatk SelectVariants -V "${RAW_VCF}" -select-type INDEL -O "${OUT_DIR}/indels_raw.vcf.gz"
 gatk VariantFiltration \
     -V "${OUT_DIR}/indels_raw.vcf.gz" \
     -O "${OUT_DIR}/indels_filtered.vcf.gz" \
-    --filter-expression "QD < 2.0 || FS > 200.0 || SOR > 10.0 || ReadPosRankSum < -20.0" \
-    --filter-name "INDEL_FILTER"
+    --filter-expression "QD < 2.0" --filter-name "QD2" \
+    --filter-expression "QUAL < 30.0" --filter-name "QUAL30" \
+    --filter-expression "FS > 200.0" --filter-name "FS200" \
+    --filter-expression "ReadPosRankSum < -20.0" --filter-name "ReadPosRankSum-20"
 
 # Merge
 gatk MergeVcfs \
