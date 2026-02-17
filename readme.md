@@ -27,18 +27,21 @@ Scripts so sánh và đánh giá quy trình gọi biến thể của 4 công c�
 
 ```text
 ├── data/
-│   ├── reference/      # reference genome, index, known-sites
-│   └── simulated/      # truth VCF + FASTQ mô phỏng
-results/
-├── preprocessing/      # BAM/metrics sau preprocessing
-├── variants/           # VCF theo từng caller
-│   ├── gatk/
-│   ├── deepvariant/
-│   ├── strelka2/
-│   └── freebayes/
-├── benchmarks/
-│   └── rtg_vcfeval/    # TP/FP/FN summary and merged
-└── functional_risk/    # risk-weighted summary/details
+│   ├── reference/          # reference genome, index, known-sites
+│   └── simulated/          # truth VCF + FASTQ mô phỏng
+├── log/                    # file log chứa dữ liệu chạy của giai đoạn tiền xử lý dữ liệu trước gọi biến thể và gọi biến thể
+└── results/
+    ├── preprocessing/      # BAM/metrics sau preprocessing
+    ├── variants/           # VCF theo từng caller
+    │   ├── gatk/
+    │   ├── deepvariant/
+    │   ├── strelka2/
+    │   └── freebayes/
+    ├── benchmarks/
+    │   ├── ref/
+    │   ├── rtg_vcfeval/    # TP/FP/FN summary and merged
+    │   └── truth/
+    └── functional_risk/    # risk-weighted summary/details
 ```
 
 ## 3. Thứ tự chạy pipeline hiện tại
