@@ -11,7 +11,7 @@ Scripts so sánh và đánh giá quy trình gọi biến thể của 4 công c�
 ├── data/
 │   ├── reference/          # reference genome, index, known-sites
 │   └── simulated/          # truth VCF + FASTQ mô phỏng
-├── pipeline/
+├── stages/
 │   ├── 03_variant_calling_gatk.sh
 │   ├── 04_variant_calling_deepvariant.sh
 │   ├── 05_variant_calling_strelka2.sh
@@ -46,10 +46,10 @@ results/
 Từ thư mục gốc repo:
 
 ```bash
-bash pipeline/03_variant_calling_gatk.sh
-bash pipeline/04_variant_calling_deepvariant.sh
-bash pipeline/05_variant_calling_strelka2.sh
-bash pipeline/06_variant_calling_freebayes.sh
-bash pipeline/07_benchmark_rtg_vcfeval.sh
+bash stages/03_variant_calling_gatk.sh
+bash stages/04_variant_calling_deepvariant.sh
+bash stages/05_variant_calling_strelka2.sh
+bash stages/06_variant_calling_freebayes.sh
+bash stages/07_benchmark_rtg_vcfeval.sh
 ```
 
