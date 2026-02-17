@@ -43,15 +43,10 @@ Scripts so sánh và đánh giá quy trình gọi biến thể của 4 công c�
     └── functional_risk/    # risk-weighted summary/details
 ```
 
-## 3. Thứ tự chạy pipeline hiện tại
+## 3. Thứ tự chạy pipeline
 
-Từ thư mục gốc repo:
+Xem tại ```workflow.md```.
 
-```bash
-bash stages/03_variant_calling_gatk.sh
-bash stages/04_variant_calling_deepvariant.sh
-bash stages/05_variant_calling_strelka2.sh
-bash stages/06_variant_calling_freebayes.sh
-bash stages/07_benchmark_rtg_vcfeval.sh
-```
+
+
 
