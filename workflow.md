@@ -189,24 +189,134 @@ gzip "${SIM_DIR}/${PREFIX}_R1.fastq"
 gzip "${SIM_DIR}/${PREFIX}_R2.fastq"
 ```
 
-### Phần III. Tiền xử lý và gọi biến thể
+### Phần III. Tiền xử lý dữ liệu cho công đoạn gọi biến thể
 
-Sau khi hoàn thành PHẦN 1 và PHẦN 2, chạy các script theo thứ tự:
+Pipeline: FastQC → BWA-MEM → MarkDuplicates → BQSR
+
+#### 3.1. FastQC - Raw reads quality control
+
+```bash
+mkdir -p results/preprocessing/fastqc_raw
+fastqc -t 4 \
+  -o results/preprocessing/fastqc_raw \
+  data/simulated/SIMULATED_SAMPLE_chr22_R1.fastq.gz \
+  data/simulated/SIMULATED_SAMPLE_chr22_R2.fastq.gz \
+  2>&1 | tee logs/fastqc_raw.log
+```
+
+#### 3.2. BWA-MEM - Alignment (directly from raw FASTQ after FastQC)
+
+```bash
+bwa mem \
+  -t 4 \
+  -R "@RG\tID:SIMULATED_SAMPLE\tSM:SIMULATED_SAMPLE\tPL:ILLUMINA\tLB:lib1\tPU:unit1" \
+  -M \
+  data/reference/chr22.fa \
+  data/simulated/SIMULATED_SAMPLE_chr22_R1.fastq.gz \
+  data/simulated/SIMULATED_SAMPLE_chr22_R2.fastq.gz \
+  2> logs/bwa_mem.log | \
+  samtools sort -@ 4 -m 2G -o results/preprocessing/SIMULATED_SAMPLE_chr22_aligned.bam -
+
+samtools index results/preprocessing/SIMULATED_SAMPLE_chr22_aligned.bam
+```
+
+#### 3.3. GATK MarkDuplicates
+
+```bash
+gatk MarkDuplicates \
+  --java-options "-Xmx12G -XX:ParallelGCThreads=2" \
+  -I results/preprocessing/SIMULATED_SAMPLE_chr22_aligned.bam \
+  -O results/preprocessing/SIMULATED_SAMPLE_chr22_marked.bam \
+  -M results/preprocessing/SIMULATED_SAMPLE_chr22_dup_metrics.txt \
+  --VALIDATION_STRINGENCY SILENT \
+  --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 \
+  --CREATE_INDEX true \
+  2>&1 | tee logs/markduplicates.log
+```
+
+
+#### 3.4. GATK BaseRecalibrator & ApplyBQSR
+
+```bash
+# Ensure known-sites VCFs match the "chr" naming convention if needed.
+# If your VCFs use "22" instead of "chr22", run:
+# scripts/rename_chromosomes.sh <input.vcf.gz> <output.vcf.gz>
+
+gatk BaseRecalibrator \
+  --java-options "-Xmx12G -XX:ParallelGCThreads=2" \
+  -R data/reference/chr22.fa \
+  -I results/preprocessing/SIMULATED_SAMPLE_chr22_marked.bam \
+  --known-sites data/reference/dbsnp138.hg38.chr22.vcf.gz \
+  --known-sites data/reference/Mills_and_1000G_gold_standard.indels.hg38.chr22.vcf.gz \
+  --known-sites data/reference/1000G_phase1.snps.high_confidence.hg38.chr22.vcf.gz \
+  -O results/preprocessing/SIMULATED_SAMPLE_chr22_recal.table \
+  2>&1 | tee logs/baserecalibrator.log
+
+gatk ApplyBQSR \
+  --java-options "-Xmx12G -XX:ParallelGCThreads=2" \
+  -R data/reference/chr22.fa \
+  -I results/preprocessing/SIMULATED_SAMPLE_chr22_marked.bam \
+  --bqsr-recal-file results/preprocessing/SIMULATED_SAMPLE_chr22_recal.table \
+  -O results/preprocessing/SIMULATED_SAMPLE_chr22_recal.bam \
+  2>&1 | tee logs/applybqsr.log
+
+samtools index results/preprocessing/SIMULATED_SAMPLE_chr22_recal.bam
+```
+
+#### 3.5. Filter by mapping quality
+
+```bash
+samtools view \
+  -@ 4 \
+  -b \
+  -q 20 \
+  -F 1796 \
+  results/preprocessing/SIMULATED_SAMPLE_chr22_recal.bam | \
+  samtools sort -@ 4 -o results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam -
+
+samtools index results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam
+```
+
+#### 3.6 Alignment statistics (samtools stats, mosdepth)
+
+```bash
+samtools stats results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam \
+  > results/preprocessing/SIMULATED_SAMPLE_chr22_stats.txt
+samtools flagstat results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam \
+  > results/preprocessing/SIMULATED_SAMPLE_chr22_flagstat.txt
+samtools idxstats results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam \
+  > results/preprocessing/SIMULATED_SAMPLE_chr22_idxstats.txt
+
+# mosdepth for coverage
+mosdepth -t 4 --by 1000 \
+  results/preprocessing/SIMULATED_SAMPLE_chr22_coverage \
+  results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam
+```
+
+#### 3.7 Export for downstream scripts
+
+```bash
+echo "FINAL_BAM=results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam" > results/preprocessing/bam_path.sh
+```
+
+### Phần IV. Gọi biến thể
 
 ```bash
 #pwd: variant-benchmarking
 
-bash 02_preprocessing_manual.sh
 bash pipeline/03_variant_calling_gatk.sh
 bash pipeline/04_variant_calling_deepvariant.sh
 bash pipeline/05_variant_calling_strelka2.sh
 bash pipeline/06_variant_calling_freebayes.sh
-bash pipeline/07_benchmark_rtg_vcfeval.sh
-bash 07_functional_risk_assessment.sh
 ```
+
+### Phần V. So sánh các công cụ gọi biến thể bằng RTG Tools VCFEval 
+
+#### 5.1 Chạy VCFeval cho 4 file VCF output của 4 công cụ gọi biến thể sau khi gọi biến thể
 
 ```bash
 # pwd: variant-benchmarking
+
 # khai báo đường dẫn
 BED=data/reference/chr22_non_N_regions.bed
 REF=data/reference/chr22.fa
@@ -288,4 +398,130 @@ RTG_MEM=14G rtg vcfeval \
   --bed-regions "$BED" \
   --output results/benchmarks/rtg_vcfeval/freebayes \
   --threads 4
+```
+
+#### 5.2 Hợp nhất các file output fn/fp/tp sau khi dùng rtgtool/vcfeval của 4 công cụ gọi biến thể
+
+``` bash
+OUTDIR=results/benchmarks/rtg_vcfeval/merged
+mkdir -p "$OUTDIR"
+```
+
+```bash
+# FN
+
+FN_GATK=$(ls results/benchmarks/rtg_vcfeval/gatk/*fn*.vcf.gz | head -n 1)
+FN_DV=$(ls results/benchmarks/rtg_vcfeval/deepvariant/*fn*.vcf.gz | head -n 1)
+FN_ST=$(ls results/benchmarks/rtg_vcfeval/strelka2/*fn*.vcf.gz | head -n 1)
+FN_FB=$(ls results/benchmarks/rtg_vcfeval/freebayes/*fn*.vcf.gz | head -n 1)
+
+for X in gatk:"$FN_GATK" deepvariant:"$FN_DV" strelka2:"$FN_ST" freebayes:"$FN_FB"; do
+  S=${X%%:*}; IN=${X#*:}
+  zcat "$IN" | awk -v s="$S" 'BEGIN{OFS="\t"; gt=0}
+    /^##FORMAT=<ID=GT/ {gt=1}
+    /^##/ {print; next}
+    /^#CHROM/ {
+      if(!gt) print "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">"
+      print "#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT",s
+      next
+    }
+    {print $1,$2,$3,$4,$5,$6,$7,$8,"GT","1/1"}
+  ' | bgzip -c > "$OUTDIR/$S.fn.vcf.gz"
+  tabix -f -p vcf "$OUTDIR/$S.fn.vcf.gz"
+done
+
+bcftools merge -m none -Oz -o "$OUTDIR/fn_4callers.vcf.gz" \
+  "$OUTDIR/gatk.fn.vcf.gz" "$OUTDIR/deepvariant.fn.vcf.gz" \
+  "$OUTDIR/strelka2.fn.vcf.gz" "$OUTDIR/freebayes.fn.vcf.gz"
+tabix -f -p vcf "$OUTDIR/fn_4callers.vcf.gz"
+```
+
+```bash
+# FP
+
+FP_GATK=$(ls results/benchmarks/rtg_vcfeval/gatk/*fp*.vcf.gz | head -n 1)
+FP_DV=$(ls results/benchmarks/rtg_vcfeval/deepvariant/*fp*.vcf.gz | head -n 1)
+FP_ST=$(ls results/benchmarks/rtg_vcfeval/strelka2/*fp*.vcf.gz | head -n 1)
+FP_FB=$(ls results/benchmarks/rtg_vcfeval/freebayes/*fp*.vcf.gz | head -n 1)
+
+for X in gatk:"$FP_GATK" deepvariant:"$FP_DV" strelka2:"$FP_ST" freebayes:"$FP_FB"; do
+  S=${X%%:*}; IN=${X#*:}
+  zcat "$IN" | awk -v s="$S" 'BEGIN{OFS="\t"; gt=0}
+    /^##FORMAT=<ID=GT/ {gt=1}
+    /^##/ {print; next}
+    /^#CHROM/ {
+      if(!gt) print "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">"
+      print "#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT",s
+      next
+    }
+    {print $1,$2,$3,$4,$5,$6,$7,$8,"GT","1/1"}
+  ' | bgzip -c > "$OUTDIR/$S.fp.vcf.gz"
+  tabix -f -p vcf "$OUTDIR/$S.fp.vcf.gz"
+done
+
+bcftools merge -m none -Oz -o "$OUTDIR/fp_4callers.vcf.gz" \
+  "$OUTDIR/gatk.fp.vcf.gz" "$OUTDIR/deepvariant.fp.vcf.gz" \
+  "$OUTDIR/strelka2.fp.vcf.gz" "$OUTDIR/freebayes.fp.vcf.gz"
+tabix -f -p vcf "$OUTDIR/fp_4callers.vcf.gz"
+```
+
+```bash
+# TP (TP này là TP_callset, không phải baseline)
+
+TP_GATK=$(ls results/benchmarks/rtg_vcfeval/gatk/*tp*.vcf.gz | grep -v baseline | head -n 1)
+TP_DV=$(ls results/benchmarks/rtg_vcfeval/deepvariant/*tp*.vcf.gz | grep -v baseline | head -n 1)
+TP_ST=$(ls results/benchmarks/rtg_vcfeval/strelka2/*tp*.vcf.gz | grep -v baseline | head -n 1)
+TP_FB=$(ls results/benchmarks/rtg_vcfeval/freebayes/*tp*.vcf.gz | grep -v baseline | head -n 1)
+
+for X in gatk:"$TP_GATK" deepvariant:"$TP_DV" strelka2:"$TP_ST" freebayes:"$TP_FB"; do
+  S=${X%%:*}; IN=${X#*:}
+  zcat "$IN" | awk -v s="$S" 'BEGIN{OFS="\t"; gt=0}
+    /^##FORMAT=<ID=GT/ {gt=1}
+    /^##/ {print; next}
+    /^#CHROM/ {
+      if(!gt) print "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">"
+      print "#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT",s
+      next
+    }
+    {print $1,$2,$3,$4,$5,$6,$7,$8,"GT","1/1"}
+  ' | bgzip -c > "$OUTDIR/$S.tp.vcf.gz"
+  tabix -f -p vcf "$OUTDIR/$S.tp.vcf.gz"
+done
+
+bcftools merge -m none -Oz -o "$OUTDIR/tp_4callers.vcf.gz" \
+  "$OUTDIR/gatk.tp.vcf.gz" "$OUTDIR/deepvariant.tp.vcf.gz" \
+  "$OUTDIR/strelka2.tp.vcf.gz" "$OUTDIR/freebayes.tp.vcf.gz"
+tabix -f -p vcf "$OUTDIR/tp_4callers.vcf.gz"
+```
+
+### 5.3 Chuyển file VCF sang CSV để phục vụ cho công đoạn xử lý dữ liệu và trực quan hoá
+
+```bash
+# FN
+
+IN=results/benchmarks/rtg_vcfeval/merged/fn_4callers.vcf.gz
+OUT=results/benchmarks/rtg_vcfeval/merged/fn_4callers.csv
+
+echo "CHROM,POS,REF,ALT,$(bcftools query -l "$IN" | paste -sd, -)" > "$OUT"
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%GT]\n' "$IN" | tr '\t' ',' >> "$OUT"
+```
+
+```bash
+# FP
+
+IN=results/benchmarks/rtg_vcfeval/merged/fp_4callers.vcf.gz
+OUT=results/benchmarks/rtg_vcfeval/merged/fp_4callers.csv
+
+echo "CHROM,POS,REF,ALT,$(bcftools query -l "$IN" | paste -sd, -)" > "$OUT"
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%GT]\n' "$IN" | tr '\t' ',' >> "$OUT"
+```
+
+```bash
+# TP
+
+IN=results/benchmarks/rtg_vcfeval/merged/tp_4callers.vcf.gz
+OUT=results/benchmarks/rtg_vcfeval/merged/tp_4callers.csv
+
+echo "CHROM,POS,REF,ALT,$(bcftools query -l "$IN" | paste -sd, -)" > "$OUT"
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%GT]\n' "$IN" | tr '\t' ',' >> "$OUT"
 ```
