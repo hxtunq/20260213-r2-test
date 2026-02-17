@@ -45,7 +45,7 @@ Scripts so sánh và đánh giá quy trình gọi biến thể của 4 công c�
 
 ## 3. Thứ tự chạy pipeline
 
-Xem tại ```workflow.md```.
+Xem tại file [workflow.md](https://github.com/hxtunq/20260213-r2-test/blob/main/workflow.md).
 
 
 
