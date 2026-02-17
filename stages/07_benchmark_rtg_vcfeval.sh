@@ -26,7 +26,7 @@ if [[ ${#missing_tools[@]} -gt 0 ]]; then
 fi
 
 # Có thể override bằng biến môi trường, ví dụ:
-# CALLERS="gatk deepvariant" bash pipeline/07_benchmark_rtg_vcfeval.sh
+# CALLERS="gatk deepvariant" bash stages/07_benchmark_rtg_vcfeval.sh
 CALLERS_RAW="${CALLERS:-gatk deepvariant strelka2 freebayes}"
 IFS=' ' read -r -a CALLER_LIST <<< "${CALLERS_RAW}"
 

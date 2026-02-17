@@ -304,10 +304,10 @@ echo "FINAL_BAM=results/preprocessing/SIMULATED_SAMPLE_chr22_final.bam" > result
 ```bash
 #pwd: variant-benchmarking
 
-bash pipeline/03_variant_calling_gatk.sh
-bash pipeline/04_variant_calling_deepvariant.sh
-bash pipeline/05_variant_calling_strelka2.sh
-bash pipeline/06_variant_calling_freebayes.sh
+bash stages/03_variant_calling_gatk.sh
+bash stages/04_variant_calling_deepvariant.sh
+bash stages/05_variant_calling_strelka2.sh
+bash stages/06_variant_calling_freebayes.sh
 ```
 
 ### Phần V. So sánh các công cụ gọi biến thể bằng RTG Tools VCFEval 
