@@ -8,9 +8,6 @@ Scripts so sánh và đánh giá quy trình gọi biến thể của 4 công c�
 .
 ├── readme.md
 ├── workflow.md
-├── data/
-│   ├── reference/          # reference genome, index, known-sites
-│   └── simulated/          # truth VCF + FASTQ mô phỏng
 ├── stages/
 │   ├── 03_variant_calling_gatk.sh
 │   ├── 04_variant_calling_deepvariant.sh
@@ -26,9 +23,12 @@ Scripts so sánh và đánh giá quy trình gọi biến thể của 4 công c�
     └── risk_weighted_eval.py
 ```
 
-## 2. Cấu trúc thư mục sau khi chạy lệnh
+## 2. Cấu trúc thư mục sau khi chạy qua các câu lệnh từ workflow.md và stages/
 
 ```text
+├── data/
+│   ├── reference/      # reference genome, index, known-sites
+│   └── simulated/      # truth VCF + FASTQ mô phỏng
 results/
 ├── preprocessing/      # BAM/metrics sau preprocessing
 ├── variants/           # VCF theo từng caller
