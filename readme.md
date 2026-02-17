@@ -37,7 +37,7 @@ results/
 │   ├── strelka2/
 │   └── freebayes/
 ├── benchmarks/
-│   └── rtg_vcfeval/    # TP/FP/FN + summary
+│   └── rtg_vcfeval/    # TP/FP/FN summary and merged
 └── functional_risk/    # risk-weighted summary/details
 ```
 
